@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+dist/
+*.egg-info/
+.coverage
+coverage.xml
+.pytest_cache/
+.ruff_cache/
+.pyright/
