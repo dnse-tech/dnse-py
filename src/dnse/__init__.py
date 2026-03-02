@@ -5,9 +5,9 @@ try:
 except ModuleNotFoundError:
     __version__ = "0.0.0+dev"
 
-from dnse.exceptions import DnseAPIError, DnseAuthError, DnseError, DnseRateLimitError
-from dnse.client import DnseClient
 from dnse.async_client import AsyncDnseClient
+from dnse.client import DnseClient
+from dnse.exceptions import DnseAPIError, DnseAuthError, DnseError, DnseRateLimitError
 
 __all__ = [
     "__version__",

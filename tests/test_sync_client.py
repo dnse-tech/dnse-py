@@ -45,6 +45,22 @@ def test_context_manager_closes_client():
         assert client._client.is_closed
 
 
+def test_put_success():
+    with respx.mock(base_url=BASE_URL) as mock:
+        mock.put("/v1/orders/123").mock(return_value=httpx.Response(200, json={"updated": True}))
+        with DnseClient() as client:
+            response = client.put("/v1/orders/123", json={"qty": 10})
+    assert response.status_code == 200
+
+
+def test_delete_success():
+    with respx.mock(base_url=BASE_URL) as mock:
+        mock.delete("/v1/orders/123").mock(return_value=httpx.Response(204))
+        with DnseClient() as client:
+            response = client.delete("/v1/orders/123")
+    assert response.status_code == 204
+
+
 def test_custom_base_url():
     custom_url = "https://staging.dnse.com.vn"
     with respx.mock(base_url=custom_url) as mock:

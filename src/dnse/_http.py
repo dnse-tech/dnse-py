@@ -6,13 +6,15 @@ from dataclasses import dataclass
 
 from dnse.exceptions import DnseAPIError, DnseAuthError, DnseRateLimitError
 
+# TODO: confirm actual DNSE Open API base URL
+DEFAULT_BASE_URL = "https://openapi.dnse.com.vn"
+
 
 @dataclass(frozen=True, slots=True)
 class HttpConfig:
     """Immutable HTTP client configuration."""
 
-    # TODO: confirm actual DNSE Open API base URL
-    base_url: str = "https://openapi.dnse.com.vn"
+    base_url: str = DEFAULT_BASE_URL
     timeout: float = 30.0
     api_key: str = ""
 
@@ -60,6 +62,9 @@ def handle_response(
     if status_code == 429:
         retry_after: float | None = None
         if headers and "retry-after" in headers:
-            retry_after = float(headers["retry-after"])
+            try:
+                retry_after = float(headers["retry-after"])
+            except (ValueError, TypeError):
+                retry_after = None
         raise DnseRateLimitError(status_code, body, retry_after)
     raise DnseAPIError(status_code, body)

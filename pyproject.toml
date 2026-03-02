@@ -33,6 +33,7 @@ dev = [
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+exclude = ["src/dnse/_version.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "D", "S"]
@@ -42,10 +43,15 @@ convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "D"]
+"src/dnse/_version.py" = ["UP", "I"]
 
 [tool.pyright]
 typeCheckingMode = "strict"
 pythonVersion = "3.10"
+
+[[tool.pyright.executionEnvironments]]
+root = "tests"
+reportPrivateUsage = "none"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

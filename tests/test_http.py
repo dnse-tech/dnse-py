@@ -52,6 +52,12 @@ def test_handle_response_429_parses_retry_after():
     assert exc_info.value.retry_after == 5.0
 
 
+def test_handle_response_429_non_numeric_retry_after():
+    with pytest.raises(DnseRateLimitError) as exc_info:
+        handle_response(429, "Too Many Requests", {"retry-after": "Wed, 21 Oct 2026 07:28:00 GMT"})
+    assert exc_info.value.retry_after is None
+
+
 def test_handle_response_500_raises_api_error():
     with pytest.raises(DnseAPIError) as exc_info:
         handle_response(500, "Internal Server Error")

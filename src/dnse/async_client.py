@@ -6,7 +6,7 @@ from typing import Any
 
 import httpx
 
-from dnse._http import HttpConfig, build_headers, handle_response
+from dnse._http import DEFAULT_BASE_URL, HttpConfig, build_headers, handle_response
 
 
 class AsyncDnseClient:
@@ -16,9 +16,16 @@ class AsyncDnseClient:
         self,
         api_key: str = "",
         *,
-        base_url: str = "https://openapi.dnse.com.vn",
+        base_url: str = DEFAULT_BASE_URL,
         timeout: float = 30.0,
     ) -> None:
+        """Initialize the asynchronous DNSE client.
+
+        Args:
+            api_key: Bearer token for API authentication.
+            base_url: Base URL of the DNSE Open API.
+            timeout: Request timeout in seconds.
+        """
         self._config = HttpConfig(base_url=base_url, timeout=timeout, api_key=api_key)
         self._client = httpx.AsyncClient(
             base_url=base_url,
@@ -67,7 +74,9 @@ class AsyncDnseClient:
         await self._client.aclose()
 
     async def __aenter__(self) -> AsyncDnseClient:
+        """Enter async context manager."""
         return self
 
     async def __aexit__(self, *args: object) -> None:
+        """Exit async context manager and close the client."""
         await self.aclose()

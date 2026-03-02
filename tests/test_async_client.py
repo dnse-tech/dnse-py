@@ -36,6 +36,22 @@ async def test_async_auth_error():
     assert exc_info.value.status_code == 401
 
 
+async def test_async_put_success():
+    with respx.mock(base_url=BASE_URL) as mock:
+        mock.put("/v1/orders/123").mock(return_value=httpx.Response(200, json={"updated": True}))
+        async with AsyncDnseClient() as client:
+            response = await client.put("/v1/orders/123", json={"qty": 10})
+    assert response.status_code == 200
+
+
+async def test_async_delete_success():
+    with respx.mock(base_url=BASE_URL) as mock:
+        mock.delete("/v1/orders/123").mock(return_value=httpx.Response(204))
+        async with AsyncDnseClient() as client:
+            response = await client.delete("/v1/orders/123")
+    assert response.status_code == 204
+
+
 async def test_async_context_manager_closes_client():
     with respx.mock(base_url=BASE_URL):
         client = AsyncDnseClient()

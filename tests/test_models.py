@@ -15,7 +15,7 @@ def test_base_model_snake_case():
 
 
 def test_base_model_camel_alias():
-    m = SampleModel(**{"orderId": "xyz", "totalAmount": 50.0})
+    m = SampleModel.model_validate({"orderId": "xyz", "totalAmount": 50.0})
     assert m.order_id == "xyz"
     assert m.total_amount == 50.0
 
