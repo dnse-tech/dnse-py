@@ -98,9 +98,7 @@ class BaseClient:
         """
         raise NotImplementedError
 
-    def _handle_retry(
-        self, attempt: int, response: httpx.Response
-    ) -> float | None:
+    def _handle_retry(self, attempt: int, response: httpx.Response) -> float | None:
         """Return sleep duration if response should be retried, else None.
 
         Args:

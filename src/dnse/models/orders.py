@@ -10,13 +10,13 @@ class PlaceOrderRequest(DnseBaseModel):
 
     account_no: str
     symbol: str
-    side: str           # "NB" (buy) | "NS" (sell)
-    order_type: str     # "LO" | "ATO" | "ATC" | "MTL" | "MOK" | "MAK"
+    side: str  # "NB" (buy) | "NS" (sell)
+    order_type: str  # "LO" | "ATO" | "ATC" | "MTL" | "MOK" | "MAK"
     quantity: int
-    price: float | None = None          # required for LO
+    price: float | None = None  # required for LO
     loan_package_id: int | None = None
-    order_category: str | None = None   # e.g. "NORMAL"
-    market_type: str | None = None      # e.g. "STOCK"
+    order_category: str | None = None  # e.g. "NORMAL"
+    market_type: str | None = None  # e.g. "STOCK"
 
 
 class OrderItem(DnseBaseModel):

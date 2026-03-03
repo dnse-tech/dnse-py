@@ -35,6 +35,8 @@ from dnse.models import (
     TwoFAResponse,
     UpdateOrderRequest,
 )
+from dnse.stream import DnseMarketStream, DnseTradingStream
+from dnse.stream.exceptions import DnseStreamError
 
 __all__ = [
     "__version__",
@@ -47,6 +49,10 @@ __all__ = [
     "DnseAuthError",
     "DnseRateLimitError",
     "DnseSessionExpiredError",
+    # stream
+    "DnseMarketStream",
+    "DnseTradingStream",
+    "DnseStreamError",
     # base model
     "DnseBaseModel",
     # auth models

@@ -176,9 +176,7 @@ def test_ppse_response_creation():
 
 def test_ppse_response_model_validate_camel_case():
     """PpseResponse.model_validate with camelCase JSON."""
-    resp = PpseResponse.model_validate(
-        {"price": 27600.0, "qmaxBuy": 200, "qmaxSell": 300}
-    )
+    resp = PpseResponse.model_validate({"price": 27600.0, "qmaxBuy": 200, "qmaxSell": 300})
     assert resp.price == 27600.0
     assert resp.qmax_buy == 200
     assert resp.qmax_sell == 300

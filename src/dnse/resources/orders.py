@@ -75,9 +75,7 @@ class OrdersResource:
         response = self._client._send("GET", path, headers=headers)
         return self._client._parse(response, OrderItem)
 
-    def update(
-        self, account_no: str, order_id: int, request: UpdateOrderRequest
-    ) -> OrderItem:
+    def update(self, account_no: str, order_id: int, request: UpdateOrderRequest) -> OrderItem:
         """Modify an existing order (quantity and/or price).
 
         Requires an active trading token. Sends only non-None fields.

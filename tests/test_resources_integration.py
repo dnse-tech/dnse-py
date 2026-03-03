@@ -15,7 +15,7 @@ class TestRegistrationResourceMocked:
 
     def test_send_otp_calls_endpoint(self):
         """send_otp calls POST /registration/send-email-otp."""
-        with patch.object(DnseClient, '_send') as mock_send:
+        with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = httpx.Response(200)
             with DnseClient(api_key="key", api_secret="secret") as client:
                 client.registration.send_otp()
@@ -28,7 +28,7 @@ class TestRegistrationResourceMocked:
     def test_verify_otp_returns_token(self):
         """verify_otp parses token from response."""
         mock_response = httpx.Response(200, json={"tradingToken": "token123"})
-        with patch.object(DnseClient, '_send') as mock_send:
+        with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
                 token = client.registration.verify_otp("123456")
@@ -42,7 +42,7 @@ class TestAccountsResourceMocked:
     def test_list_calls_endpoint(self):
         """accounts.list calls GET /accounts."""
         mock_response = httpx.Response(200, json={"accounts": []})
-        with patch.object(DnseClient, '_send') as mock_send:
+        with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
                 result = client.accounts.list()
@@ -54,7 +54,7 @@ class TestAccountsResourceMocked:
     def test_balances_calls_endpoint(self):
         """accounts.balances calls GET /accounts/{id}/balances."""
         mock_response = httpx.Response(200, json={"stock": {}})
-        with patch.object(DnseClient, '_send') as mock_send:
+        with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
                 result = client.accounts.balances("123")
@@ -64,7 +64,7 @@ class TestAccountsResourceMocked:
     def test_loan_packages_calls_endpoint(self):
         """accounts.loan_packages calls GET /accounts/{id}/loan-packages."""
         mock_response = httpx.Response(200, json={"loanPackages": []})
-        with patch.object(DnseClient, '_send') as mock_send:
+        with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
                 result = client.accounts.loan_packages("456")
@@ -74,7 +74,7 @@ class TestAccountsResourceMocked:
     def test_ppse_calls_endpoint(self):
         """accounts.ppse calls GET /accounts/{id}/ppse with params."""
         mock_response = httpx.Response(200, json={"price": 27000.0})
-        with patch.object(DnseClient, '_send') as mock_send:
+        with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
                 result = client.accounts.ppse("789", symbol="HPG", price="27000")
@@ -91,7 +91,7 @@ class TestOrdersResourceMocked:
     def test_place_order_calls_endpoint(self):
         """orders.place calls POST /accounts/orders."""
         mock_response = httpx.Response(201, json={"id": 1})
-        with patch.object(DnseClient, '_send') as mock_send:
+        with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
                 client.set_trading_token("token")
@@ -112,7 +112,7 @@ class TestOrdersResourceMocked:
     def test_list_calls_endpoint(self):
         """orders.list calls GET /accounts/{id}/orders."""
         mock_response = httpx.Response(200, json={"orders": []})
-        with patch.object(DnseClient, '_send') as mock_send:
+        with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
                 result = client.orders.list("123")
@@ -123,7 +123,7 @@ class TestOrdersResourceMocked:
     def test_get_calls_endpoint(self):
         """orders.get calls GET /accounts/{id}/orders/{order_id}."""
         mock_response = httpx.Response(200, json={"id": 42})
-        with patch.object(DnseClient, '_send') as mock_send:
+        with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
                 result = client.orders.get("123", 42)
@@ -133,11 +133,12 @@ class TestOrdersResourceMocked:
     def test_update_calls_endpoint(self):
         """orders.update calls PUT /accounts/{id}/orders/{order_id}."""
         mock_response = httpx.Response(200, json={"id": 42})
-        with patch.object(DnseClient, '_send') as mock_send:
+        with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
                 client.set_trading_token("token")
                 from dnse.models.orders import UpdateOrderRequest
+
                 req = UpdateOrderRequest(price=27500.0)
                 result = client.orders.update("123", 42, req)
             call_args = mock_send.call_args
@@ -147,7 +148,7 @@ class TestOrdersResourceMocked:
     def test_cancel_calls_endpoint(self):
         """orders.cancel calls DELETE /accounts/{id}/orders/{order_id}."""
         mock_response = httpx.Response(204)
-        with patch.object(DnseClient, '_send') as mock_send:
+        with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
                 client.set_trading_token("token")
@@ -159,7 +160,7 @@ class TestOrdersResourceMocked:
     def test_history_calls_endpoint(self):
         """orders.history calls GET /accounts/{id}/orders/history."""
         mock_response = httpx.Response(200, json={"data": []})
-        with patch.object(DnseClient, '_send') as mock_send:
+        with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
                 result = client.orders.history("123", **{"from": "2026-01-01"})
@@ -173,7 +174,7 @@ class TestDealsResourceMocked:
     def test_list_calls_endpoint(self):
         """deals.list calls GET /accounts/{id}/deals."""
         mock_response = httpx.Response(200, json={"deals": []})
-        with patch.object(DnseClient, '_send') as mock_send:
+        with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
                 result = client.deals.list("123")
@@ -188,7 +189,7 @@ class TestMarketResourceMocked:
     def test_security_info_calls_endpoint(self):
         """market.security_info calls GET /price/secdef/{symbol}."""
         mock_response = httpx.Response(200, json={"symbol": "HPG"})
-        with patch.object(DnseClient, '_send') as mock_send:
+        with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
                 result = client.market.security_info("HPG")
@@ -203,7 +204,7 @@ class TestAsyncResourcesMocked:
     async def test_async_registration_send_otp(self):
         """Async registration.send_otp calls correct endpoint."""
         mock_response = httpx.Response(200)
-        with patch.object(AsyncDnseClient, '_async_send', new_callable=AsyncMock) as mock_send:
+        with patch.object(AsyncDnseClient, "_async_send", new_callable=AsyncMock) as mock_send:
             mock_send.return_value = mock_response
             async with AsyncDnseClient(api_key="key", api_secret="secret") as client:
                 await client.registration.send_otp()
@@ -214,7 +215,7 @@ class TestAsyncResourcesMocked:
     async def test_async_accounts_list(self):
         """Async accounts.list calls correct endpoint."""
         mock_response = httpx.Response(200, json={"accounts": []})
-        with patch.object(AsyncDnseClient, '_async_send', new_callable=AsyncMock) as mock_send:
+        with patch.object(AsyncDnseClient, "_async_send", new_callable=AsyncMock) as mock_send:
             mock_send.return_value = mock_response
             async with AsyncDnseClient(api_key="key", api_secret="secret") as client:
                 result = await client.accounts.list()
@@ -225,7 +226,7 @@ class TestAsyncResourcesMocked:
     async def test_async_orders_place(self):
         """Async orders.place calls correct endpoint."""
         mock_response = httpx.Response(201, json={"id": 1})
-        with patch.object(AsyncDnseClient, '_async_send', new_callable=AsyncMock) as mock_send:
+        with patch.object(AsyncDnseClient, "_async_send", new_callable=AsyncMock) as mock_send:
             mock_send.return_value = mock_response
             async with AsyncDnseClient(api_key="key", api_secret="secret") as client:
                 client.set_trading_token("token")

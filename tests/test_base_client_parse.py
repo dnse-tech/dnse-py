@@ -84,7 +84,9 @@ def test_trading_token_injection_on_post_orders():
 def test_trading_token_injection_on_put_orders():
     """_request_headers includes trading-token header for PUT /accounts/orders."""
     with respx.mock(base_url=BASE_URL) as mock:
-        mock.put("/accounts/123/orders/456").mock(return_value=httpx.Response(200, json={"id": 456}))
+        mock.put("/accounts/123/orders/456").mock(
+            return_value=httpx.Response(200, json={"id": 456})
+        )
         with DnseClient(api_key="key", api_secret="secret") as client:
             client.set_trading_token("mytoken456")
             response = client.put("/accounts/123/orders/456", json={"price": 27000})
@@ -120,7 +122,9 @@ def test_no_trading_token_injection_on_get_orders():
 def test_no_trading_token_injection_on_post_non_orders():
     """_request_headers does NOT include trading-token header for POST on non-orders path."""
     with respx.mock(base_url=BASE_URL) as mock:
-        mock.post("/registration/trading-token").mock(return_value=httpx.Response(200, json={"tradingToken": "abc"}))
+        mock.post("/registration/trading-token").mock(
+            return_value=httpx.Response(200, json={"tradingToken": "abc"})
+        )
         with DnseClient(api_key="key", api_secret="secret") as client:
             client.set_trading_token("already-have-token")
             response = client.post("/registration/trading-token", json={"otp": "123456"})
@@ -145,7 +149,9 @@ def test_no_trading_token_injection_when_token_not_set():
 def test_trading_token_injection_complex_path():
     """_request_headers checks /accounts/orders substring match."""
     with respx.mock(base_url=BASE_URL) as mock:
-        mock.post("/accounts/orders/complex/path").mock(return_value=httpx.Response(200, json={"id": 1}))
+        mock.post("/accounts/orders/complex/path").mock(
+            return_value=httpx.Response(200, json={"id": 1})
+        )
         with DnseClient(api_key="key", api_secret="secret") as client:
             client.set_trading_token("token")
             response = client.post("/accounts/orders/complex/path", json={})

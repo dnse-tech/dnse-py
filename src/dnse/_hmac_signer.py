@@ -50,9 +50,7 @@ def build_signature_headers(
         signed_headers += " nonce"
 
     sig_string = "\n".join(parts)
-    raw_sig = hmac.new(
-        api_secret.encode(), sig_string.encode(), hashlib.sha256
-    ).digest()
+    raw_sig = hmac.new(api_secret.encode(), sig_string.encode(), hashlib.sha256).digest()
     sig = urllib.parse.quote(base64.b64encode(raw_sig).decode(), safe="")
 
     sig_header = (

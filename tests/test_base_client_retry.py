@@ -122,7 +122,11 @@ def test_retry_non_numeric_retry_after():
     with respx.mock(base_url=BASE_URL) as mock:
         mock.get("/accounts").mock(
             side_effect=[
-                httpx.Response(429, text="Rate limited", headers={"retry-after": "Wed, 21 Oct 2026 07:28:00 GMT"}),
+                httpx.Response(
+                    429,
+                    text="Rate limited",
+                    headers={"retry-after": "Wed, 21 Oct 2026 07:28:00 GMT"},
+                ),
                 httpx.Response(200, json={"ok": True}),
             ]
         )

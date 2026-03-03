@@ -1,6 +1,5 @@
 """Tests for resource initialization and access patterns."""
 
-
 from dnse.async_client import AsyncDnseClient
 from dnse.client import DnseClient
 from dnse.resources.accounts import AccountsResource, AsyncAccountsResource
