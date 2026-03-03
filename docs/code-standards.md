@@ -19,7 +19,13 @@ tests/
 ├── test_async_client.py     # AsyncDnseClient async tests
 ├── test_exceptions.py       # Exception hierarchy tests
 ├── test_http.py             # HTTP utilities tests
-└── test_models.py           # Model serialization tests
+├── test_models.py           # Model serialization tests
+└── integration/             # Full-pipeline integration tests (respx mocked HTTP)
+    ├── __init__.py
+    ├── conftest.py          # Shared constants & fixtures (BASE_URL, FAKE_KEY, FAKE_SECRET)
+    ├── test_auth_pipeline.py        # Auth headers, HMAC signing, trading-token rules
+    ├── test_sync_pipeline.py        # Sync resources: registration, accounts, orders, deals, market
+    └── test_async_pipeline.py       # Async resources: registration, accounts, orders, deals, market
 ```
 
 ## Naming Conventions
@@ -201,10 +207,19 @@ async with AsyncDnseClient(api_key="key") as client:
 - All public methods tested
 - Error paths tested
 - Edge cases covered
+- Full-pipeline integration tests via respx transport mocking
+
+### Test Types
+
+#### Unit Tests (tests/test_*.py)
+Mock `_send()` and `_async_send()` methods; verify isolated component behavior.
+
+#### Integration Tests (tests/integration/)
+Full-pipeline tests using `respx.mock` context manager; verify HMAC signing, headers, body serialization, and response parsing through real httpx transport without modifying SDK internals.
 
 ### Test Structure
 ```python
-# test_client.py
+# Unit test example: test_client.py
 import pytest
 from dnse import DnseClient, DnseAuthError
 
@@ -227,11 +242,37 @@ def test_auth_error_on_401(respx_mock):
             client.get("/v1/test")
 ```
 
+#### Integration Test Pattern (tests/integration/)
+```python
+# tests/integration/test_auth_pipeline.py
+import respx
+from dnse import DnseClient
+from tests.integration.conftest import BASE_URL, FAKE_KEY, FAKE_SECRET
+
+def test_hmac_headers_present():
+    """Verify HMAC auth headers on authenticated request via respx transport."""
+    with respx.mock:
+        respx.get(f"{BASE_URL}/accounts").mock(
+            return_value=httpx.Response(200, json={"accounts": []})
+        )
+        # DnseClient instantiated INSIDE respx.mock context to capture transport
+        client = DnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET)
+        client.accounts.list()
+
+        # Inspect intercepted request
+        request = respx.calls.last.request
+        assert request.headers["x-api-key"] == FAKE_KEY
+        assert "x-signature" in request.headers
+        assert "date" in request.headers
+        assert "nonce" in request.headers
+```
+
 ### Test Fixtures
-- Use `respx_mock` for HTTP mocking
-- Use `pytest.mark.asyncio` for async tests
+- Use `respx.mock` for HTTP mocking (respx intercepts httpx.Client transport)
+- Use `pytest-asyncio` with `asyncio_mode = "auto"` (async tests auto-discovered)
 - Factory fixtures for common test data
 - Parameterized tests for multiple scenarios
+- Shared fixtures in `tests/integration/conftest.py` (BASE_URL, FAKE_KEY, FAKE_SECRET, FAKE_ACCOUNT)
 
 ## Linting & Type Checking
 
