@@ -55,8 +55,9 @@ class DnseClient(BaseClient):
 
     def _send(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
         """Send a synchronous HTTP request with per-request HMAC headers."""
-        headers = self._request_headers(method, path)
-        return self._http_client.request(method, path, headers=headers, **kwargs)
+        if "headers" not in kwargs:
+            kwargs["headers"] = self._request_headers(method, path)
+        return self._http_client.request(method, path, **kwargs)
 
     # ── Resources (lazy, cached) ──────────────────────────────────────────
 

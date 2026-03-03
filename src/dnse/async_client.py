@@ -60,8 +60,9 @@ class AsyncDnseClient(BaseClient):
 
     async def _async_send(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
         """Send an asynchronous HTTP request with per-request HMAC headers."""
-        headers = self._request_headers(method, path)
-        return await self._http_client.request(method, path, headers=headers, **kwargs)
+        if "headers" not in kwargs:
+            kwargs["headers"] = self._request_headers(method, path)
+        return await self._http_client.request(method, path, **kwargs)
 
     async def _async_request_with_retry(
         self, method: str, path: str, **kwargs: Any
