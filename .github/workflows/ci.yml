@@ -15,6 +15,20 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run pyright
+      - name: Compile-check examples
+        run: |
+          python -m py_compile examples/quickstart.py
+          python -m py_compile examples/use-cases/portfolio-check.py
+          python -m py_compile examples/use-cases/place-a-trade.py
+          python -m py_compile examples/use-cases/order-history.py
+          python -m py_compile examples/use-cases/market-data.py
+          python -m py_compile examples/reference/accounts.py
+          python -m py_compile examples/reference/orders.py
+          python -m py_compile examples/reference/deals.py
+          python -m py_compile examples/reference/market.py
+          python -m py_compile examples/reference/market-stream.py
+          python -m py_compile examples/reference/trading-stream.py
+          python -m py_compile examples/reference/async-client.py
 
   test:
     needs: lint

@@ -18,6 +18,7 @@ from dnse.models import (
     AccountBalanceResponse,
     AccountsResponse,
     AccountSubItem,
+    BoardId,
     DealItem,
     DealsResponse,
     DnseBaseModel,
@@ -70,6 +71,7 @@ __all__ = [
     "DealItem",
     "DealsResponse",
     # market models
+    "BoardId",
     "SecurityDefinition",
     # order models
     "PlaceOrderRequest",

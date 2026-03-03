@@ -17,7 +17,6 @@ from dnse.models.orders import (
     PlaceOrderResponse,
     UpdateOrderRequest,
 )
-
 from tests.integration.conftest import BASE_URL, FAKE_ACCOUNT, FAKE_KEY, FAKE_SECRET
 
 BASE = BASE_URL
@@ -154,9 +153,7 @@ class TestSyncOrdersPipeline:
 
     def test_cancel_returns_none(self):
         with respx.mock:
-            respx.delete(BASE + f"/accounts/{ACC}/orders/99").mock(
-                return_value=httpx.Response(204)
-            )
+            respx.delete(BASE + f"/accounts/{ACC}/orders/99").mock(return_value=httpx.Response(204))
             client = DnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET)
             client.set_trading_token("tok")
             result = client.orders.cancel(ACC, 99)
@@ -192,10 +189,25 @@ class TestSyncMarketPipeline:
     def test_security_info(self):
         with respx.mock:
             respx.get(BASE + "/price/secdef/HPG").mock(
-                return_value=httpx.Response(200, json={"symbol": "HPG"})
+                return_value=httpx.Response(200, json=[{"symbol": "HPG", "boardId": "AL"}])
             )
             client = DnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET)
             result = client.market.security_info("HPG")
 
-        assert isinstance(result, SecurityDefinition)
-        assert result.symbol == "HPG"
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert isinstance(result[0], SecurityDefinition)
+        assert result[0].symbol == "HPG"
+
+    def test_security_info_with_board_id(self):
+        from dnse.models.market import BoardId
+
+        with respx.mock:
+            route = respx.get(BASE + "/price/secdef/HPG").mock(
+                return_value=httpx.Response(200, json=[{"symbol": "HPG", "boardId": "G1"}])
+            )
+            client = DnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET)
+            result = client.market.security_info("HPG", board_id=BoardId.ROUND_LOT)
+
+        assert result[0].board_id == "G1"  # raw string from server
+        assert "boardId=G1" in str(route.calls.last.request.url)

@@ -40,6 +40,8 @@ def build_signature_headers(
     date_value = _rfc2822_now()
     nonce = uuid.uuid4().hex if use_nonce else None
 
+    # The headers field lists only (request-target) and date — nonce is NOT listed
+    # here even though it IS included in the signature string (matches reference impl).
     signed_headers = f"(request-target) {date_header}"
     parts = [
         f"(request-target): {method.lower()} {path}",
@@ -47,12 +49,12 @@ def build_signature_headers(
     ]
     if nonce:
         parts.append(f"nonce: {nonce}")
-        signed_headers += " nonce"
 
     sig_string = "\n".join(parts)
     raw_sig = hmac.new(api_secret.encode(), sig_string.encode(), hashlib.sha256).digest()
     sig = urllib.parse.quote(base64.b64encode(raw_sig).decode(), safe="")
 
+    # Nonce is appended as a separate field on X-Signature, not as its own HTTP header.
     sig_header = (
         f'Signature keyId="{api_key}",algorithm="hmac-sha256",'
         f'headers="{signed_headers}",signature="{sig}"'
@@ -60,11 +62,8 @@ def build_signature_headers(
     if nonce:
         sig_header += f',nonce="{nonce}"'
 
-    headers: dict[str, str] = {
+    return {
         "x-api-key": api_key,
         date_header: date_value,
         "X-Signature": sig_header,
     }
-    if nonce:
-        headers["nonce"] = nonce
-    return headers

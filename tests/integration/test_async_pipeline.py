@@ -17,7 +17,6 @@ from dnse.models.orders import (
     PlaceOrderResponse,
     UpdateOrderRequest,
 )
-
 from tests.integration.conftest import BASE_URL, FAKE_ACCOUNT, FAKE_KEY, FAKE_SECRET
 
 BASE = BASE_URL
@@ -37,7 +36,9 @@ class TestAsyncAuthPipeline:
         assert request.headers["x-api-key"] == FAKE_KEY
         assert "date" in request.headers
         assert request.headers["x-signature"].startswith('Signature keyId="testkey"')
-        assert "nonce" in request.headers
+        # nonce is embedded in X-Signature, not sent as a separate HTTP header
+        assert "nonce" not in request.headers
+        assert 'nonce="' in request.headers["x-signature"]
 
     async def test_trading_token_on_async_order_mutation(self):
         with respx.mock:
@@ -47,7 +48,12 @@ class TestAsyncAuthPipeline:
             async with AsyncDnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET) as client:
                 client.set_trading_token("tok123")
                 req = PlaceOrderRequest(
-                    account_no=ACC, symbol="HPG", side="NB", order_type="LO", quantity=100, price=25.0
+                    account_no=ACC,
+                    symbol="HPG",
+                    side="NB",
+                    order_type="LO",
+                    quantity=100,
+                    price=25.0,
                 )
                 await client.orders.place(req)
             request = route.calls.last.request
@@ -122,7 +128,12 @@ class TestAsyncOrdersPipeline:
             async with AsyncDnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET) as client:
                 client.set_trading_token("tok")
                 req = PlaceOrderRequest(
-                    account_no=ACC, symbol="HPG", side="NB", order_type="LO", quantity=100, price=25.0
+                    account_no=ACC,
+                    symbol="HPG",
+                    side="NB",
+                    order_type="LO",
+                    quantity=100,
+                    price=25.0,
                 )
                 result = await client.orders.place(req)
             body = json.loads(route.calls.last.request.content)
@@ -170,9 +181,7 @@ class TestAsyncOrdersPipeline:
 
     async def test_cancel(self):
         with respx.mock:
-            respx.delete(BASE + f"/accounts/{ACC}/orders/99").mock(
-                return_value=httpx.Response(204)
-            )
+            respx.delete(BASE + f"/accounts/{ACC}/orders/99").mock(return_value=httpx.Response(204))
             async with AsyncDnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET) as client:
                 client.set_trading_token("tok")
                 result = await client.orders.cancel(ACC, 99)
@@ -208,10 +217,12 @@ class TestAsyncMarketPipeline:
     async def test_security_info(self):
         with respx.mock:
             respx.get(BASE + "/price/secdef/HPG").mock(
-                return_value=httpx.Response(200, json={"symbol": "HPG"})
+                return_value=httpx.Response(200, json=[{"symbol": "HPG", "boardId": "AL"}])
             )
             async with AsyncDnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET) as client:
                 result = await client.market.security_info("HPG")
 
-        assert isinstance(result, SecurityDefinition)
-        assert result.symbol == "HPG"
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert isinstance(result[0], SecurityDefinition)
+        assert result[0].symbol == "HPG"

@@ -1,6 +1,7 @@
 """Async resource integration tests covering all AsyncXxxResource methods."""
 
 from unittest.mock import AsyncMock, patch
+
 import httpx
 
 from dnse.async_client import AsyncDnseClient
@@ -19,8 +20,6 @@ from dnse.models.orders import (
     PlaceOrderResponse,
     UpdateOrderRequest,
 )
-
-
 
 # ---------------------------------------------------------------------------
 # Async Accounts
@@ -202,12 +201,13 @@ class TestAsyncDealsResource:
 
 class TestAsyncMarketResource:
     async def test_security_info_calls_endpoint(self):
-        mock_response = httpx.Response(200, json={"symbol": "HPG"})
+        mock_response = httpx.Response(200, json=[{"symbol": "HPG"}])
         with patch.object(AsyncDnseClient, "_async_send", new_callable=AsyncMock) as mock_send:
             mock_send.return_value = mock_response
             async with AsyncDnseClient(api_key="key", api_secret="secret") as client:
                 result = await client.market.security_info("HPG")
-        assert isinstance(result, SecurityDefinition)
+        assert isinstance(result, list)
+        assert isinstance(result[0], SecurityDefinition)
         call_args = mock_send.call_args
         assert call_args[0][0] == "GET"
         assert "/price/secdef/HPG" in call_args[0][1]

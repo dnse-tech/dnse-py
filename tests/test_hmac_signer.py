@@ -46,13 +46,11 @@ def test_build_signature_headers_signature_format():
 
 
 def test_build_signature_headers_with_nonce_true():
-    """With use_nonce=True, nonce is present."""
+    """With use_nonce=True, nonce appears in X-Signature but NOT as a separate HTTP header."""
     headers = build_signature_headers("GET", "/accounts", "key", "secret", use_nonce=True)
-    assert "nonce" in headers
-    # nonce should be a UUID hex string (32 chars)
-    assert len(headers["nonce"]) == 32
-    # Signature should also contain the nonce
-    assert "nonce=" in headers["X-Signature"]
+    # nonce is embedded in X-Signature only, not sent as its own header
+    assert "nonce" not in headers
+    assert 'nonce="' in headers["X-Signature"]
 
 
 def test_build_signature_headers_with_nonce_false():
@@ -135,15 +133,20 @@ def test_build_signature_headers_hmac_verifiable():
 
 
 def test_build_signature_headers_nonce_included_in_signature():
-    """When nonce is present, it's included in signature computation."""
+    """When nonce is present, it's embedded in X-Signature as ,nonce="..." field."""
     headers = build_signature_headers("GET", "/accounts", "key", "secret", use_nonce=True)
-    nonce = headers["nonce"]
     sig = headers["X-Signature"]
 
-    # Signature should contain the nonce value
-    assert nonce in sig
-    # And should list nonce in headers
-    assert "nonce" in sig
+    # Extract nonce value from X-Signature (,nonce="<hex>")
+    import re
+
+    m = re.search(r'nonce="([0-9a-f]+)"', sig)
+    assert m is not None, "nonce should be present in X-Signature"
+    nonce_val = m.group(1)
+    assert len(nonce_val) == 32  # uuid4 hex
+
+    # headers field must NOT list nonce (matches reference impl)
+    assert 'headers="(request-target) date"' in sig
 
 
 def test_build_signature_headers_post_method():

@@ -5,7 +5,6 @@ import respx
 
 from dnse.client import DnseClient
 from dnse.models.orders import PlaceOrderRequest
-
 from tests.integration.conftest import BASE_URL, FAKE_ACCOUNT, FAKE_KEY, FAKE_SECRET
 
 BASE = BASE_URL
@@ -24,7 +23,9 @@ class TestHmacHeadersPresence:
         assert request.headers["x-api-key"] == FAKE_KEY
         assert "date" in request.headers
         assert request.headers["x-signature"].startswith('Signature keyId="testkey"')
-        assert "nonce" in request.headers
+        # nonce is embedded in X-Signature, not sent as a separate HTTP header
+        assert "nonce" not in request.headers
+        assert 'nonce="' in request.headers["x-signature"]
 
     def test_date_header_variant_x_aux_date(self):
         with respx.mock:
