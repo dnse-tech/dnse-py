@@ -4,6 +4,9 @@
 
 set -e
 
+echo "→ format (ruff)..."
+uv run ruff format --check .
+
 echo "→ lint (ruff)..."
 uv run ruff check .
 
