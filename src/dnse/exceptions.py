@@ -37,3 +37,7 @@ class DnseRateLimitError(DnseAPIError):
         """
         self.retry_after = retry_after
         super().__init__(status_code, body)
+
+
+class DnseSessionExpiredError(DnseAuthError):
+    """Trading token has expired. Re-authenticate with OTP."""

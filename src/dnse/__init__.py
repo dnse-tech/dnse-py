@@ -7,14 +7,69 @@ except ModuleNotFoundError:
 
 from dnse.async_client import AsyncDnseClient
 from dnse.client import DnseClient
-from dnse.exceptions import DnseAPIError, DnseAuthError, DnseError, DnseRateLimitError
+from dnse.exceptions import (
+    DnseAPIError,
+    DnseAuthError,
+    DnseError,
+    DnseRateLimitError,
+    DnseSessionExpiredError,
+)
+from dnse.models import (
+    AccountBalanceResponse,
+    AccountsResponse,
+    AccountSubItem,
+    DealItem,
+    DealsResponse,
+    DnseBaseModel,
+    GetOrdersResponse,
+    LoanPackage,
+    LoanPackageResponse,
+    OrderHistoryResponse,
+    OrderItem,
+    PlaceOrderRequest,
+    PlaceOrderResponse,
+    PpseResponse,
+    SecurityDefinition,
+    StockBalance,
+    TwoFARequest,
+    TwoFAResponse,
+    UpdateOrderRequest,
+)
 
 __all__ = [
     "__version__",
+    # clients
+    "DnseClient",
+    "AsyncDnseClient",
+    # exceptions
     "DnseError",
     "DnseAPIError",
     "DnseAuthError",
     "DnseRateLimitError",
-    "DnseClient",
-    "AsyncDnseClient",
+    "DnseSessionExpiredError",
+    # base model
+    "DnseBaseModel",
+    # auth models
+    "TwoFARequest",
+    "TwoFAResponse",
+    # account models
+    "AccountSubItem",
+    "AccountsResponse",
+    "StockBalance",
+    "AccountBalanceResponse",
+    "LoanPackage",
+    "LoanPackageResponse",
+    "PpseResponse",
+    # deal models
+    "DealItem",
+    "DealsResponse",
+    # market models
+    "SecurityDefinition",
+    # order models
+    "PlaceOrderRequest",
+    "PlaceOrderResponse",
+    "OrderItem",
+    "GetOrdersResponse",
+    "UpdateOrderRequest",
+    "OrderHistoryResponse",
 ]
