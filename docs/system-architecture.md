@@ -5,76 +5,100 @@
 ```
 ┌──────────────────────────────────────────────────────────┐
 │              Application Code (User)                     │
-│  (Imports DnseClient, AsyncDnseClient, exceptions)       │
+│  (Imports DnseClient, AsyncDnseClient, models)           │
 └─────────────────────┬──────────────────────────────────┘
                       │
 ┌─────────────────────▼──────────────────────────────────┐
-│          Client Layer (client.py, async_client.py)      │
-│  ┌──────────────────┐  ┌──────────────────────────┐   │
-│  │  DnseClient      │  │  AsyncDnseClient         │   │
-│  │  (Sync)          │  │  (Async)                 │   │
-│  └──────────────────┘  └──────────────────────────┘   │
-│  - Context managers                                    │
-│  - Request routing (GET, POST, PUT, DELETE)            │
-│  - Response error handling                             │
+│        Resource Layer (resources/)                      │
+│  ┌────────────┐  ┌─────────────┐  ┌──────────────┐   │
+│  │Registration│  │   Accounts  │  │   Orders     │   │
+│  │            │  │             │  │              │   │
+│  │ send_otp() │  │  list()     │  │  place()     │   │
+│  │verify_otp()│  │ balances()  │  │  list()      │   │
+│  └────────────┘  │loan_packages│  │  get()       │   │
+│                  │   ppse()    │  │  update()    │   │
+│                  └─────────────┘  │  cancel()    │   │
+│  ┌──────────────┐  ┌──────────┐  │  history()   │   │
+│  │    Deals     │  │  Market  │  └──────────────┘   │
+│  │             │  │          │                      │
+│  │  list()     │  │security_ │                      │
+│  └──────────────┘  │info()    │                      │
+│                    └──────────┘                      │
+└─────────────────────┬──────────────────────────────┘
+                      │
+┌─────────────────────▼──────────────────────────────────┐
+│       Client Layer (client.py, async_client.py)        │
+│  ┌──────────────────┐  ┌──────────────────────────┐  │
+│  │  DnseClient      │  │ AsyncDnseClient          │  │
+│  │  (Sync)          │  │ (Async)                  │  │
+│  │                  │  │                          │  │
+│  │ @cached_property │  │ @cached_property         │  │
+│  │ registration     │  │ registration             │  │
+│  │ accounts, orders │  │ accounts, orders, ...    │  │
+│  └──────────────────┘  └──────────────────────────┘  │
+└─────────────────────┬──────────────────────────────┘
+                      │
+┌─────────────────────▼──────────────────────────────────┐
+│       Base Client Layer (_base_client.py)              │
+│  ┌────────────────────────────────────────────────┐   │
+│  │  BaseClient                                    │   │
+│  │  - Retry logic on 429 (up to 3 attempts)       │   │
+│  │  - Typed response parsing (Pydantic validate)  │   │
+│  │  - Trading token injection for order mutations │   │
+│  │  - Session expiry detection (401 → check token)│   │
+│  │  - Abstract _send() for sync/async             │   │
+│  └────────────────────────────────────────────────┘   │
 └─────────────────────┬──────────────────────────────────┘
                       │
 ┌─────────────────────▼──────────────────────────────────┐
-│          HTTP Utilities Layer (_http.py)               │
-│  ┌──────────────────────────────────────────────┐    │
-│  │  HttpConfig (dataclass)                      │    │
-│  │  - base_url (default: openapi.dnse.com.vn)   │    │
-│  │  - timeout (default: 30.0s)                  │    │
-│  │  - api_key (Bearer token)                    │    │
-│  └──────────────────────────────────────────────┘    │
-│  ┌──────────────────────────────────────────────┐    │
-│  │  build_headers(config) → dict[str, str]      │    │
-│  │  - User-Agent, Accept                        │    │
-│  │  - Authorization (if api_key set)            │    │
-│  └──────────────────────────────────────────────┘    │
-│  ┌──────────────────────────────────────────────┐    │
-│  │  handle_response(status, body, headers)      │    │
-│  │  - Maps HTTP codes to typed exceptions       │    │
-│  │  - Extracts retry-after from headers         │    │
-│  └──────────────────────────────────────────────┘    │
+│    HMAC Signing Layer (_hmac_signer.py)                │
+│  ┌────────────────────────────────────────────────┐   │
+│  │  build_signature_headers()                     │   │
+│  │  - HMAC-SHA256(api_secret, signature_string)   │   │
+│  │  - Returns: x-api-key, X-Signature, Date/nonce│   │
+│  │  - Nonce: uuid4().hex (32 char)                │   │
+│  │  - Date: RFC 2822 format (configurable header) │   │
+│  └────────────────────────────────────────────────┘   │
+└─────────────────────┬──────────────────────────────────┘
+                      │
+┌─────────────────────▼──────────────────────────────────┐
+│    HTTP Utilities Layer (_http.py)                     │
+│  ┌────────────────────────────────────────────────┐   │
+│  │  HttpConfig (dataclass)                        │   │
+│  │  - base_url, timeout, api_key, api_secret      │   │
+│  │  - date_header ("date" or "x-aux-date")        │   │
+│  └────────────────────────────────────────────────┘   │
+│  ┌────────────────────────────────────────────────┐   │
+│  │  build_request_headers() → dict                │   │
+│  │  - Calls build_signature_headers               │   │
+│  │  - Injects trading-token if set and path match │   │
+│  └────────────────────────────────────────────────┘   │
+│  ┌────────────────────────────────────────────────┐   │
+│  │  handle_response()                             │   │
+│  │  - 401 + trading_token → DnseSessionExpiredErr│   │
+│  │  - 401/403 → DnseAuthError                     │   │
+│  │  - 429 → DnseRateLimitError (retry_after)      │   │
+│  └────────────────────────────────────────────────┘   │
 └─────────────────────┬──────────────────────────────────┘
                       │
 ┌─────────────────────▼──────────────────────────────────┐
 │       Exception Layer (exceptions.py)                   │
-│  ┌──────────────────┐                                 │
-│  │  DnseError       │ (Base)                          │
-│  └────────┬─────────┘                                 │
-│           │                                           │
-│  ┌────────▼──────────────┐                           │
-│  │  DnseAPIError         │ (status_code, body)       │
-│  └────────┬──────────────┘                           │
-│           │                                           │
-│     ┌─────┴──────┬──────────────────┐               │
-│     │            │                  │               │
-│  ┌──▼──┐  ┌──────▼──────┐  ┌────────▼────┐        │
-│  │401/ │  │   429       │  │  Other      │        │
-│  │403  │  │  (Rate Lim) │  │  (Generic)  │        │
-│  └─────┘  └─────────────┘  └─────────────┘        │
-│  DnseAuthError  DnseRateLimitError   DnseAPIError │
-└──────────────────────────────────────────────────────┘
-                      │
-┌─────────────────────▼──────────────────────────────────┐
-│       Model Layer (models/base.py)                      │
-│  ┌────────────────────────────────────────────────┐   │
-│  │  DnseBaseModel (Pydantic v2 BaseModel)         │   │
-│  │  - populate_by_name=True                       │   │
-│  │  - alias_generator=to_camel                    │   │
-│  │  - Serialization: snake_case ↔ camelCase      │   │
-│  └────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────┘
+│  ┌──────────────────────────────────────────────────┐  │
+│  │  DnseError (base)                               │  │
+│  │  └── DnseAPIError                               │  │
+│  │      ├── DnseAuthError (401/403, no token)      │  │
+│  │      ├── DnseSessionExpiredError (401, token)   │  │
+│  │      └── DnseRateLimitError (429 + retry_after) │  │
+│  └──────────────────────────────────────────────────┘  │
+└─────────────────────┬──────────────────────────────────┘
                       │
 ┌─────────────────────▼──────────────────────────────────┐
 │      Transport Layer (httpx)                           │
-│  ┌──────────────┐  ┌────────────────────────────────┐│
-│  │ httpx.Client │  │ httpx.AsyncClient              ││
-│  │ (Connection  │  │ (Connection pool, async)       ││
-│  │  pool)       │  │                                ││
-│  └──────────────┘  └────────────────────────────────┘│
+│  ┌──────────────┐  ┌────────────────────────────────┐ │
+│  │ httpx.Client │  │ httpx.AsyncClient              │ │
+│  │ (Connection  │  │ (Connection pool, async)       │ │
+│  │  pool)       │  │                                │ │
+│  └──────────────┘  └────────────────────────────────┘ │
 └─────────────────────┬──────────────────────────────────┘
                       │
 ┌─────────────────────▼──────────────────────────────────┐
@@ -87,16 +111,17 @@
 
 ### 1. `__init__.py` - Public API Gateway
 **Exports:**
-- `DnseClient`, `AsyncDnseClient` - Client classes
-- `DnseError`, `DnseAPIError`, `DnseAuthError`, `DnseRateLimitError` - Exceptions
+- Clients: `DnseClient`, `AsyncDnseClient`
+- Exceptions: `DnseError`, `DnseAPIError`, `DnseAuthError`, `DnseSessionExpiredError`, `DnseRateLimitError`
+- Models: All domain models (`TwoFARequest`, `TwoFAResponse`, `AccountItem`, `OrderItem`, etc.)
 - `__version__` - Package version from hatch-vcs
 
 **Rule:** Only public, documented classes/functions in `__all__`
 
 ### 2. `_http.py` - HTTP Infrastructure (Private)
 **Exports:**
-- `HttpConfig` - Immutable configuration dataclass
-- `build_headers()` - Header construction with auth
+- `HttpConfig` - Immutable configuration dataclass (api_key, api_secret, base_url, timeout, date_header)
+- `build_request_headers()` - Header construction with HMAC + trading token injection
 - `handle_response()` - HTTP status code to exception mapping
 - `DEFAULT_BASE_URL` - API base URL constant
 
@@ -104,51 +129,73 @@
 ```python
 # Status mapping:
 2xx → return (success)
+401 + trading_token set → DnseSessionExpiredError
 401/403 → DnseAuthError
 429 → DnseRateLimitError (extracts retry-after)
 others → DnseAPIError
 ```
 
-### 3. `client.py` - Synchronous Client
-**Class:** `DnseClient`
+### 3. `_base_client.py` - Base Client with Shared Logic
+**Class:** `BaseClient`
+**Methods:**
+- `_request_headers(method, path)` - Build HMAC headers + inject trading token if needed
+- `_parse(response, model)` - Typed Pydantic validation with handle_response
+- `_should_retry(attempt, response)` - Backoff logic for 429
+- `set_trading_token(token)` - Store token from OTP flow
+- `request(method, path, **kwargs)` - Core retry loop + typed parsing
+- `request_raw(method, path, **kwargs)` - Low-level, returns httpx.Response
+- Abstract `_send(method, path, **kw)` - Implemented by sync/async clients
+
+**Retry Logic:**
+- MAX_RETRIES = 3, RETRY_BASE_DELAY = 1.0
+- On 429: exponential backoff (2^attempt), respects retry-after header
+- On other errors: immediate raise
+
+### 4. `client.py` - Synchronous Client
+**Class:** `DnseClient(BaseClient)`
 **Interface:**
-- `__init__(api_key, base_url, timeout)` - Initialize
-- `request(method, path, **kwargs)` - Core method
-- `get()`, `post()`, `put()`, `delete()` - Convenience methods
-- `close()` - Manual cleanup
-- Context manager (`__enter__`, `__exit__`)
+- `__init__(api_key, api_secret, base_url, timeout, date_header)`
+- Thin I/O wrapper: `_send()` blocks on httpx
+- Resource access: `@cached_property` for registration, accounts, orders, deals, market
+- `close()`, context manager support
 
-**Flow:**
-1. User calls `client.get(path)`
-2. Routes to `request("GET", path)`
-3. Calls `self._client.request()` (httpx)
-4. Calls `handle_response()` (may raise exception)
-5. Returns `httpx.Response` on success
+### 5. `async_client.py` - Asynchronous Client
+**Class:** `AsyncDnseClient(BaseClient)`
+**Interface:** Same as sync, fully async
+- `_send()` is async, awaits httpx
+- Same resource properties (async variants)
+- `aclose()`, `async with` context manager
 
-### 4. `async_client.py` - Asynchronous Client
-**Class:** `AsyncDnseClient`
-**Interface:** Identical to `DnseClient` but all methods are async
-**Key Differences:**
-- Uses `httpx.AsyncClient`
-- All methods are coroutines
-- Works with `async with` context manager
-- Use `await client.get(path)`
+### 6. `_hmac_signer.py` - HMAC Signing
+**Function:** `build_signature_headers(method, path, api_key, api_secret, date_header, use_nonce)`
+**Returns:** dict with headers: `x-api-key`, `X-Signature`, `Date`/`X-Aux-Date`, optional `nonce`
 
-### 5. `exceptions.py` - Exception Hierarchy
+**Signature Formula:**
+```
+signed_headers = "(request-target) date [nonce]"
+sig_string = "(request-target): GET /path\ndate: Mon, 03 Mar 2026 12:00:00 +0000\n[nonce: {uuid}]"
+signature = url_encode(base64(HMAC-SHA256(api_secret, sig_string)))
+X-Signature: Signature keyId="{api_key}",algorithm="hmac-sha256",
+  headers="(request-target) date [nonce]",signature="{sig}"[,nonce="{uuid}"]
+```
+
+### 7. `exceptions.py` - Exception Hierarchy
 **Inheritance:**
 ```
 Exception
 └── DnseError
     └── DnseAPIError (base for API errors)
-        ├── DnseAuthError (401/403)
-        └── DnseRateLimitError (429)
+        ├── DnseAuthError (401/403, no trading token)
+        ├── DnseSessionExpiredError (401 with trading token set)
+        └── DnseRateLimitError (429 + retry_after)
 ```
 
 **Attributes:**
 - `DnseAPIError`: `status_code`, `body`
 - `DnseRateLimitError`: `status_code`, `body`, `retry_after`
+- `DnseSessionExpiredError`: inherits from DnseAuthError; signals token expired
 
-### 6. `models/base.py` - Base Model
+### 8. `models/base.py` - Base Model
 **Class:** `DnseBaseModel(pydantic.BaseModel)`
 **Configuration:**
 ```python
@@ -158,16 +205,21 @@ model_config = ConfigDict(
 )
 ```
 
-**Usage:**
-```python
-class User(DnseBaseModel):
-    user_id: str
-    created_at: str
+### 9. Domain Models (`models/{domain}.py`)
+- `auth.py`: `TwoFARequest`, `TwoFAResponse`
+- `accounts.py`: `AccountItem`, `AccountsResponse`, `BalanceItem`, `LoanPackage`, `PpseResponse`
+- `orders.py`: `PlaceOrderRequest`, `PlaceOrderResponse`, `OrderItem`, `OrdersResponse`, `UpdateOrderRequest`, `OrderHistoryResponse`
+- `deals.py`: `DealItem`, `DealsResponse`
+- `market.py`: `SecurityDefinition`, `MarketResponse`
 
-# Both work:
-User(user_id="123", created_at="2025-03-02")
-User(**{"userId": "123", "createdAt": "2025-03-02"})
-```
+### 10. Resources (`resources/{domain}.py`)
+- `registration.py`: `RegistrationResource`, `AsyncRegistrationResource`
+- `accounts.py`: `AccountsResource`, `AsyncAccountsResource`
+- `orders.py`: `OrdersResource`, `AsyncOrdersResource`
+- `deals.py`: `DealsResource`, `AsyncDealsResource`
+- `market.py`: `MarketResource`, `AsyncMarketResource`
+
+Each resource class holds a reference to `BaseClient` and calls `client.request()` or `client.request_raw()`.
 
 ## Data Flow Example
 

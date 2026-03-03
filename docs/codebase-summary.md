@@ -4,22 +4,36 @@
 
 DNSE is a production-ready Python SDK for the DNSE Open API with first-class support for both synchronous and asynchronous HTTP operations. Built with httpx, Pydantic v2, and strict typing for type safety and developer experience.
 
-**Version:** 0.1.0 | **Python:** 3.10+ | **Status:** Foundation Complete
+**Version:** 0.2.0 | **Python:** 3.10+ | **Status:** Resource-Oriented API Complete
 
 ## Project Structure
 
 ```
 src/dnse/
-├── __init__.py              # Public API exports
+├── __init__.py              # Public API exports (clients, exceptions, models)
 ├── _version.py              # Auto-generated version (hatch-vcs)
-├── _http.py                 # HTTP utilities, headers, error handling
-├── client.py                # DnseClient (sync)
-├── async_client.py          # AsyncDnseClient (async)
-├── exceptions.py            # Exception hierarchy
+├── _http.py                 # HTTP config, HMAC header building, error handling
+├── _hmac_signer.py          # Stateless HMAC-SHA256 signing
+├── _base_client.py          # BaseClient with retry, parsing, token injection
+├── client.py                # DnseClient (sync) + resource properties
+├── async_client.py          # AsyncDnseClient (async) + resource properties
+├── exceptions.py            # Exception hierarchy + DnseSessionExpiredError
 ├── py.typed                 # PEP 561 marker for type support
-└── models/
-    ├── __init__.py
-    └── base.py              # DnseBaseModel with camelCase alias support
+├── models/
+│   ├── __init__.py          # Export all models
+│   ├── base.py              # DnseBaseModel with camelCase alias support
+│   ├── auth.py              # TwoFARequest, TwoFAResponse
+│   ├── accounts.py          # AccountItem, AccountsResponse, BalanceItem, etc.
+│   ├── orders.py            # PlaceOrderRequest, OrderItem, OrdersResponse, etc.
+│   ├── deals.py             # DealItem, DealsResponse
+│   └── market.py            # SecurityDefinition, MarketResponse
+└── resources/
+    ├── __init__.py          # Export all resources
+    ├── registration.py      # RegistrationResource, AsyncRegistrationResource
+    ├── accounts.py          # AccountsResource, AsyncAccountsResource
+    ├── orders.py            # OrdersResource, AsyncOrdersResource
+    ├── deals.py             # DealsResource, AsyncDealsResource
+    └── market.py            # MarketResource, AsyncMarketResource
 ```
 
 ## Key Components
@@ -27,14 +41,18 @@ src/dnse/
 ### 1. HTTP Clients
 
 **DnseClient** (Sync)
-- Context manager support (`with DnseClient(...) as client:`)
+- Context manager support (`with DnseClient(api_key, api_secret) as client:`)
 - Methods: `get()`, `post()`, `put()`, `delete()`, `request()`
-- Configurable base URL and timeout
-- Bearer token authentication
+- HMAC-SHA256 signing on all requests
+- Auto-retry on 429 (rate limit) up to 3 attempts
+- Trading token injection for order mutations
+- Configurable base URL, timeout, date header
+- Lazy-loaded resource properties: `client.orders`, `client.accounts`, `client.registration`, `client.deals`, `client.market`
 
 **AsyncDnseClient** (Async)
 - Same interface as sync, fully async
-- Works with `async with` context managers
+- Works with `async with` context manager
+- Same resources, async variants
 - Use when handling multiple concurrent requests
 
 ### 2. Exception Hierarchy
@@ -42,36 +60,44 @@ src/dnse/
 ```
 DnseError (base)
 ├── DnseAPIError (status_code, body)
-│   ├── DnseAuthError (401/403)
+│   ├── DnseAuthError (401/403 without trading token)
+│   ├── DnseSessionExpiredError (401 with trading token set)
 │   └── DnseRateLimitError (429 + retry_after)
 ```
 
-All exceptions automatically raised by response handler for non-2xx status codes.
+All exceptions automatically raised by response handler for non-2xx status codes. `DnseSessionExpiredError` indicates trading token has expired; user must call `client.registration.verify_otp()` again.
 
-### 3. Models
+### 3. Models & Resources
 
-**DnseBaseModel**
-- Pydantic v2 BaseModel with shared configuration
+**DnseBaseModel** (Pydantic v2)
 - Automatic snake_case ↔ camelCase conversion
 - Supports both Python names and JSON keys
 
-Example:
-```python
-class OrderInfo(DnseBaseModel):
-    order_id: str
-    total_amount: float
+**Domain Models:**
+- `models.auth`: `TwoFARequest`, `TwoFAResponse`
+- `models.accounts`: `AccountItem`, `BalanceItem`, `LoanPackage`, `PpseResponse`, `AccountsResponse`
+- `models.orders`: `PlaceOrderRequest`, `PlaceOrderResponse`, `OrderItem`, `OrdersResponse`, `UpdateOrderRequest`, `OrderHistoryResponse`
+- `models.deals`: `DealItem`, `DealsResponse`
+- `models.market`: `SecurityDefinition`, `MarketResponse`
 
-# Both work:
-OrderInfo(order_id="123", total_amount=100.0)
-OrderInfo(**{"orderId": "123", "totalAmount": 100.0})
-```
+**Resources** (accessed via client properties):
+- `client.registration.send_otp()`, `client.registration.verify_otp(otp, otp_type)`
+- `client.accounts.list()`, `client.accounts.balances(account_no)`, `client.accounts.loan_packages(account_no)`
+- `client.orders.place(request)`, `client.orders.list(account_no)`, `client.orders.get(account_no, order_id)`, `client.orders.update()`, `client.orders.cancel()`, `client.orders.history()`
+- `client.deals.list(account_no)`
+- `client.market.security_info(symbol)`
 
-### 4. HTTP Configuration
+### 4. HTTP Configuration & Authentication
 
-- **Base URL:** `https://openapi.dnse.com.vn` (TODO: confirm in API docs)
+- **Base URL:** `https://openapi.dnse.com.vn`
 - **Timeout:** 30 seconds (configurable)
-- **Headers:** User-Agent, Accept, Authorization (when api_key provided)
-- **Auth:** Bearer token in `Authorization` header
+- **Auth:** HMAC-SHA256 signing with `api_key` and `api_secret`
+- **Headers:**
+  - `x-api-key`: API key
+  - `X-Signature`: HMAC-SHA256 signature
+  - `Date` or `X-Aux-Date`: RFC 2822 timestamp (configurable)
+  - `nonce`: UUID4 hex (included in signature)
+  - `trading-token`: OTP-derived token (order mutations only)
 
 ## Testing & Quality
 
@@ -105,14 +131,20 @@ uv publish           # Publish to PyPI
 - GitHub Actions workflow automates PyPI releases
 - Currently at v0.1.0 (foundation/initial release)
 
-## Known TODOs
+## Completed Features (v0.2.0)
 
-1. Confirm actual DNSE API base URL (currently placeholder)
-2. Confirm auth header format with DNSE API documentation
-3. Add domain-specific response models when API spec available
+- HMAC-SHA256 request signing with nonce and configurable date header
+- Resource-oriented API with lazy-loaded property access
+- Automatic 429 retry up to 3 attempts with exponential backoff
+- OTP/trading token flow with session expiry detection
+- Typed Pydantic v2 models for all API endpoints
+- Full request/response serialization with snake_case ↔ camelCase
+- 90%+ test coverage with strict type checking
 
-## Next Steps
+## Next Steps (v0.3+)
 
-- Add typed response models as API endpoints are specified
-- Consider adding request/response serialization helpers
-- Add retries + backoff utilities for rate limit handling
+- Request/response logging and tracing
+- Webhook validation helpers
+- CLI tool for API exploration
+- WebSocket support for real-time market data
+- Streaming response bodies
