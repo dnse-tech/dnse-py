@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import logging
 import threading
 from collections.abc import Callable, Coroutine
@@ -191,7 +192,7 @@ class DnseStreamBase:
 
     def _ensure_coroutine(self, fn: Any) -> None:
         """Raise TypeError if fn is not an async function."""
-        if not asyncio.iscoroutinefunction(fn):
+        if not inspect.iscoroutinefunction(fn):
             raise TypeError(f"Handler must be an async function, got {type(fn).__name__}")
 
     def _register_handler(self, t_value: str, symbol: str, handler: AsyncHandler) -> None:
