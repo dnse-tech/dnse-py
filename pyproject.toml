@@ -42,7 +42,7 @@ select = ["E", "F", "I", "B", "UP", "D", "S"]
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "D"]
+"tests/**" = ["S101", "S105", "S106", "D", "E501", "F841"]
 "src/dnse/_version.py" = ["UP", "I"]
 
 [tool.pyright]
@@ -51,6 +51,14 @@ pythonVersion = "3.10"
 
 [[tool.pyright.executionEnvironments]]
 root = "tests"
+reportPrivateUsage = "none"
+reportUnusedVariable = "none"
+reportUnknownVariableType = "none"
+reportUnknownMemberType = "none"
+reportUnknownArgumentType = "none"
+
+[[tool.pyright.executionEnvironments]]
+root = "src/dnse/resources"
 reportPrivateUsage = "none"
 
 [tool.pytest.ini_options]
