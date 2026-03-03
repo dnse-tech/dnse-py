@@ -12,7 +12,14 @@ from dnse.models.accounts import (
 from dnse.models.auth import TwoFARequest, TwoFAResponse
 from dnse.models.base import DnseBaseModel
 from dnse.models.deals import DealItem, DealsResponse
-from dnse.models.market import BoardId, SecurityDefinition
+from dnse.models.market import (
+    BoardId,
+    MarketId,
+    ProductGrpId,
+    SecurityDefinition,
+    SecurityGroupId,
+    SecurityStatus,
+)
 from dnse.models.orders import (
     GetOrdersResponse,
     OrderHistoryResponse,
@@ -40,6 +47,10 @@ __all__ = [
     "DealsResponse",
     # market
     "BoardId",
+    "MarketId",
+    "ProductGrpId",
+    "SecurityGroupId",
+    "SecurityStatus",
     "SecurityDefinition",
     # orders
     "PlaceOrderRequest",
