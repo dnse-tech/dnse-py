@@ -42,7 +42,7 @@ def test_context_manager_closes_client():
         with client:
             pass
         # After exit, underlying client should be closed
-        assert client._client.is_closed
+        assert client._http_client.is_closed
 
 
 def test_put_success():

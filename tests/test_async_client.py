@@ -57,4 +57,4 @@ async def test_async_context_manager_closes_client():
         client = AsyncDnseClient()
         async with client:
             pass
-        assert client._client.is_closed
+        assert client._http_client.is_closed
