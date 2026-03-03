@@ -25,6 +25,7 @@ from dnse.models import (
     GetOrdersResponse,
     LoanPackage,
     LoanPackageResponse,
+    MarketType,
     OrderHistoryResponse,
     OrderItem,
     PlaceOrderRequest,
@@ -66,6 +67,7 @@ __all__ = [
     "AccountBalanceResponse",
     "LoanPackage",
     "LoanPackageResponse",
+    "MarketType",
     "PpseResponse",
     # deal models
     "DealItem",

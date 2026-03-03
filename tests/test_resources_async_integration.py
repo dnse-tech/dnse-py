@@ -54,10 +54,14 @@ class TestAsyncAccountsResource:
         with patch.object(AsyncDnseClient, "_async_send", new_callable=AsyncMock) as mock_send:
             mock_send.return_value = mock_response
             async with AsyncDnseClient(api_key="key", api_secret="secret") as client:
-                result = await client.accounts.loan_packages("456")
+                result = await client.accounts.loan_packages(
+                    "456", market_type="STOCK", symbol="HPG"
+                )
         assert isinstance(result, LoanPackageResponse)
         call_args = mock_send.call_args
         assert "/accounts/456/loan-packages" in call_args[0][1]
+        assert call_args[1]["params"]["marketType"] == "STOCK"
+        assert call_args[1]["params"]["symbol"] == "HPG"
 
     async def test_ppse_calls_endpoint_with_params(self):
         mock_response = httpx.Response(200, json={"price": 27000.0})

@@ -8,6 +8,7 @@ from dnse.models.accounts import (
     AccountBalanceResponse,
     AccountsResponse,
     LoanPackageResponse,
+    MarketType,
     PpseResponse,
 )
 
@@ -48,18 +49,24 @@ class AccountsResource:
         response = self._client._send("GET", path, headers=headers)
         return self._client._parse(response, AccountBalanceResponse)
 
-    def loan_packages(self, account_no: str) -> LoanPackageResponse:
+    def loan_packages(
+        self, account_no: str, *, market_type: MarketType, symbol: str
+    ) -> LoanPackageResponse:
         """Get available loan/margin packages for a sub-account.
 
         Args:
             account_no: Sub-account number.
+            market_type: Market type, either "STOCK" or "DERIVATIVE".
+            symbol: Security symbol (e.g. "HPG").
 
         Returns:
             LoanPackageResponse with list of available packages.
         """
         path = f"/accounts/{account_no}/loan-packages"
         headers = self._client._request_headers("GET", path)
-        response = self._client._send("GET", path, headers=headers)
+        response = self._client._send(
+            "GET", path, headers=headers, params={"marketType": market_type, "symbol": symbol}
+        )
         return self._client._parse(response, LoanPackageResponse)
 
     def ppse(self, account_no: str, *, symbol: str, price: str) -> PpseResponse:
@@ -102,11 +109,21 @@ class AsyncAccountsResource:
         response = await self._client._async_send("GET", path, headers=headers)
         return self._client._parse(response, AccountBalanceResponse)
 
-    async def loan_packages(self, account_no: str) -> LoanPackageResponse:
-        """Get loan packages for a sub-account (async)."""
+    async def loan_packages(
+        self, account_no: str, *, market_type: MarketType, symbol: str
+    ) -> LoanPackageResponse:
+        """Get loan packages for a sub-account (async).
+
+        Args:
+            account_no: Sub-account number.
+            market_type: Market type, either "STOCK" or "DERIVATIVE".
+            symbol: Security symbol (e.g. "HPG").
+        """
         path = f"/accounts/{account_no}/loan-packages"
         headers = self._client._request_headers("GET", path)
-        response = await self._client._async_send("GET", path, headers=headers)
+        response = await self._client._async_send(
+            "GET", path, headers=headers, params={"marketType": market_type, "symbol": symbol}
+        )
         return self._client._parse(response, LoanPackageResponse)
 
     async def ppse(self, account_no: str, *, symbol: str, price: str) -> PpseResponse:

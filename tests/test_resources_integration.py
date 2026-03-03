@@ -62,14 +62,16 @@ class TestAccountsResourceMocked:
             assert "/accounts/123/balances" in call_args[0][1]
 
     def test_loan_packages_calls_endpoint(self):
-        """accounts.loan_packages calls GET /accounts/{id}/loan-packages."""
+        """accounts.loan_packages calls GET /accounts/{id}/loan-packages with required params."""
         mock_response = httpx.Response(200, json={"loanPackages": []})
         with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
-                result = client.accounts.loan_packages("456")
+                result = client.accounts.loan_packages("456", market_type="STOCK", symbol="HPG")
             call_args = mock_send.call_args
             assert "/accounts/456/loan-packages" in call_args[0][1]
+            assert call_args[1]["params"]["marketType"] == "STOCK"
+            assert call_args[1]["params"]["symbol"] == "HPG"
 
     def test_ppse_calls_endpoint(self):
         """accounts.ppse calls GET /accounts/{id}/ppse with params."""

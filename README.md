@@ -36,7 +36,7 @@ with DnseClient(api_key="k", api_secret="s") as client:
     # Accounts
     accts = client.accounts.list()
     balances = client.accounts.balances("0003979888")
-    packages = client.accounts.loan_packages("0003979888")
+    packages = client.accounts.loan_packages("0003979888", market_type="STOCK", symbol="HPG")
 
     # Orders (trading token required for mutations)
     client.registration.verify_otp("123456")

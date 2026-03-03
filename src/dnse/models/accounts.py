@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from dnse.models.base import DnseBaseModel
+
+# Market type for loan packages and other account operations
+MarketType = Literal["STOCK", "DERIVATIVE"]
 
 
 class AccountSubItem(DnseBaseModel):

@@ -6,6 +6,7 @@ from dnse.models.accounts import (
     AccountSubItem,
     LoanPackage,
     LoanPackageResponse,
+    MarketType,
     PpseResponse,
     StockBalance,
 )
@@ -41,6 +42,7 @@ __all__ = [
     "AccountBalanceResponse",
     "LoanPackage",
     "LoanPackageResponse",
+    "MarketType",
     "PpseResponse",
     # deals
     "DealItem",

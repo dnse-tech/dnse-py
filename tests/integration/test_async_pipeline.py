@@ -98,13 +98,18 @@ class TestAsyncAccountsPipeline:
 
     async def test_loan_packages(self):
         with respx.mock:
-            respx.get(BASE + f"/accounts/{ACC}/loan-packages").mock(
+            route = respx.get(BASE + f"/accounts/{ACC}/loan-packages").mock(
                 return_value=httpx.Response(200, json={"loanPackages": []})
             )
             async with AsyncDnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET) as client:
-                result = await client.accounts.loan_packages(ACC)
+                result = await client.accounts.loan_packages(
+                    ACC, market_type="STOCK", symbol="HPG"
+                )
+            request = route.calls.last.request
 
         assert isinstance(result, LoanPackageResponse)
+        assert request.url.params["marketType"] == "STOCK"
+        assert request.url.params["symbol"] == "HPG"
 
     async def test_ppse_params(self):
         with respx.mock:

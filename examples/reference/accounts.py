@@ -26,8 +26,8 @@ with DnseClient(
     balances = client.accounts.balances(ACCOUNT_NO)
     print("\naccounts.balances():", balances)
 
-    # loan_packages() — available margin packages
-    packages = client.accounts.loan_packages(ACCOUNT_NO)
+    # loan_packages() — available margin packages (requires marketType and symbol)
+    packages = client.accounts.loan_packages(ACCOUNT_NO, market_type="STOCK", symbol="HPG")
     print("\naccounts.loan_packages():", packages)
 
     # ppse() — pre-trade size estimation
