@@ -240,7 +240,7 @@ class TestAsyncRegistrationResource:
         with patch.object(AsyncDnseClient, "_async_send", new_callable=AsyncMock) as mock_send:
             mock_send.return_value = mock_response
             async with AsyncDnseClient(api_key="key", api_secret="secret") as client:
-                await client.registration.verify_otp("000000", otp_type="sms_otp")
+                await client.registration.verify_otp("000000", otp_type="smart_otp")
         # Verify correct path used
         call_args = mock_send.call_args
         assert "/registration/trading-token" in call_args[0][1]

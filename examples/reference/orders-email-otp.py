@@ -1,8 +1,9 @@
-"""Reference: OrdersResource — all methods.
+"""Reference: OrdersResource — all methods (Email OTP mode).
 
-OTP required for place/update/cancel.
+Email OTP: calls send_otp() to trigger an OTP to your registered email,
+then prompts you to enter it.
 
-Run: python reference/orders.py
+Run: python reference/orders-email-otp.py
 """
 
 from dotenv import load_dotenv
@@ -30,7 +31,7 @@ with DnseClient(
 
     # --- mutations require trading token ---
     client.registration.send_otp()
-    otp = input("\nEnter OTP for mutation examples (or Enter to skip): ").strip()  # noqa: S322
+    otp = input("\nEnter OTP from email (or Enter to skip): ").strip()  # noqa: S322
     if not otp:
         print("Skipping place/update/cancel examples.")
     else:

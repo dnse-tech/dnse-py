@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from dnse._http import handle_response
-from dnse.models.auth import TwoFARequest, TwoFAResponse
+from dnse.models.auth import OtpType, TwoFARequest, TwoFAResponse
 
 if TYPE_CHECKING:
     from dnse._base_client import BaseClient
@@ -39,7 +39,7 @@ class RegistrationResource:
             trading_token_set=self._client._trading_token is not None,
         )
 
-    def verify_otp(self, otp: str, *, otp_type: str = "email_otp") -> str:
+    def verify_otp(self, otp: str, *, otp_type: OtpType = "email_otp") -> str:
         """Verify OTP and obtain a trading token.
 
         Sends POST /registration/trading-token, stores the returned token

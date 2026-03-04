@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from dnse.models.base import DnseBaseModel
+
+OtpType = Literal["email_otp", "smart_otp"]
 
 
 class TwoFARequest(DnseBaseModel):
     """Request body for OTP verification (trading token retrieval)."""
 
-    otp_type: str  # e.g. "email_otp"
+    otp_type: OtpType
     passcode: str
 
 
