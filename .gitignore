@@ -14,3 +14,4 @@ plans/
 test_baseline.txt
 alpaca-py/
 htmlcov/
+=*
