@@ -79,12 +79,16 @@ class TestAccountsResourceMocked:
         with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
-                result = client.accounts.ppse("789", symbol="HPG", price="27000")
+                result = client.accounts.ppse(
+                    "789", symbol="HPG", price="27000", market_type="STOCK", loan_package_id=2278
+                )
             call_args = mock_send.call_args
             assert "/accounts/789/ppse" in call_args[0][1]
             # params should be in kwargs
             assert "params" in call_args[1]
             assert call_args[1]["params"]["symbol"] == "HPG"
+            assert call_args[1]["params"]["marketType"] == "STOCK"
+            assert call_args[1]["params"]["loanPackageId"] == 2278
 
 
 class TestOrdersResourceMocked:
@@ -179,7 +183,7 @@ class TestDealsResourceMocked:
         with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
-                result = client.deals.list("123")
+                result = client.deals.list("123", market_type="STOCK")
             call_args = mock_send.call_args
             assert call_args[0][0] == "GET"
             assert "/accounts/123/deals" in call_args[0][1]

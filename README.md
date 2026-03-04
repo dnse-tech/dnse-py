@@ -55,7 +55,7 @@ with DnseClient(api_key="k", api_secret="s") as client:
     client.orders.cancel("0003979888", order.id or 0)
 
     # Deals
-    deals = client.deals.list("0003979888")
+    deals = client.deals.list("0003979888", market_type="STOCK")
 
     # Market
     sec = client.market.security_info("HPG")

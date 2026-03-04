@@ -88,11 +88,15 @@ class TestSyncAccountsPipeline:
                 return_value=httpx.Response(200, json={})
             )
             client = DnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET)
-            client.accounts.ppse(ACC, symbol="HPG", price="25.5")
+            client.accounts.ppse(
+                ACC, symbol="HPG", price="25.5", market_type="STOCK", loan_package_id=2278
+            )
             request = route.calls.last.request
 
         assert request.url.params["symbol"] == "HPG"
         assert request.url.params["price"] == "25.5"
+        assert request.url.params["marketType"] == "STOCK"
+        assert request.url.params["loanPackageId"] == "2278"
 
 
 class TestSyncOrdersPipeline:
@@ -183,7 +187,7 @@ class TestSyncDealsPipeline:
                 return_value=httpx.Response(200, json={"deals": []})
             )
             client = DnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET)
-            result = client.deals.list(ACC)
+            result = client.deals.list(ACC, market_type="STOCK")
 
         assert isinstance(result, DealsResponse)
 

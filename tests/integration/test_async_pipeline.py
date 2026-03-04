@@ -102,9 +102,7 @@ class TestAsyncAccountsPipeline:
                 return_value=httpx.Response(200, json={"loanPackages": []})
             )
             async with AsyncDnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET) as client:
-                result = await client.accounts.loan_packages(
-                    ACC, market_type="STOCK", symbol="HPG"
-                )
+                result = await client.accounts.loan_packages(ACC, market_type="STOCK", symbol="HPG")
             request = route.calls.last.request
 
         assert isinstance(result, LoanPackageResponse)
@@ -117,11 +115,15 @@ class TestAsyncAccountsPipeline:
                 return_value=httpx.Response(200, json={})
             )
             async with AsyncDnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET) as client:
-                await client.accounts.ppse(ACC, symbol="HPG", price="25.5")
+                await client.accounts.ppse(
+                    ACC, symbol="HPG", price="25.5", market_type="STOCK", loan_package_id=2278
+                )
             request = route.calls.last.request
 
         assert request.url.params["symbol"] == "HPG"
         assert request.url.params["price"] == "25.5"
+        assert request.url.params["marketType"] == "STOCK"
+        assert request.url.params["loanPackageId"] == "2278"
 
 
 class TestAsyncOrdersPipeline:
@@ -213,7 +215,7 @@ class TestAsyncDealsPipeline:
                 return_value=httpx.Response(200, json={"deals": []})
             )
             async with AsyncDnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET) as client:
-                result = await client.deals.list(ACC)
+                result = await client.deals.list(ACC, market_type="STOCK")
 
         assert isinstance(result, DealsResponse)
 

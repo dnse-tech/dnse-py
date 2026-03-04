@@ -30,6 +30,12 @@ with DnseClient(
     packages = client.accounts.loan_packages(ACCOUNT_NO, market_type="STOCK", symbol="HPG")
     print("\naccounts.loan_packages():", packages)
 
-    # ppse() — pre-trade size estimation
-    ppse = client.accounts.ppse(ACCOUNT_NO, symbol="HPG", price="27000")
+    # ppse() — pre-trade size estimation (requires symbol, price, marketType, loanPackageId)
+    ppse = client.accounts.ppse(
+        ACCOUNT_NO,
+        symbol="HPG",
+        price="27000",
+        market_type="STOCK",
+        loan_package_id=packages.loan_packages[0].id,
+    )
     print("\naccounts.ppse():", ppse)

@@ -68,12 +68,16 @@ class TestAsyncAccountsResource:
         with patch.object(AsyncDnseClient, "_async_send", new_callable=AsyncMock) as mock_send:
             mock_send.return_value = mock_response
             async with AsyncDnseClient(api_key="key", api_secret="secret") as client:
-                await client.accounts.ppse("789", symbol="HPG", price="27000")
+                await client.accounts.ppse(
+                    "789", symbol="HPG", price="27000", market_type="STOCK", loan_package_id=2278
+                )
         call_args = mock_send.call_args
         assert call_args[0][0] == "GET"
         assert "/accounts/789/ppse" in call_args[0][1]
         assert call_args[1]["params"]["symbol"] == "HPG"
         assert call_args[1]["params"]["price"] == "27000"
+        assert call_args[1]["params"]["marketType"] == "STOCK"
+        assert call_args[1]["params"]["loanPackageId"] == 2278
 
 
 # ---------------------------------------------------------------------------
@@ -181,7 +185,7 @@ class TestAsyncDealsResource:
         with patch.object(AsyncDnseClient, "_async_send", new_callable=AsyncMock) as mock_send:
             mock_send.return_value = mock_response
             async with AsyncDnseClient(api_key="key", api_secret="secret") as client:
-                result = await client.deals.list("123")
+                result = await client.deals.list("123", market_type="STOCK")
         assert isinstance(result, DealsResponse)
         call_args = mock_send.call_args
         assert call_args[0][0] == "GET"
@@ -192,7 +196,7 @@ class TestAsyncDealsResource:
         with patch.object(AsyncDnseClient, "_async_send", new_callable=AsyncMock) as mock_send:
             mock_send.return_value = mock_response
             async with AsyncDnseClient(api_key="key", api_secret="secret") as client:
-                await client.deals.list("123", marketType="STOCK", pageSize=10)
+                await client.deals.list("123", market_type="STOCK", pageSize=10)
         call_args = mock_send.call_args
         assert call_args[1]["params"]["marketType"] == "STOCK"
         assert call_args[1]["params"]["pageSize"] == 10

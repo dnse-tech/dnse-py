@@ -34,7 +34,7 @@ with DnseClient(
         print(f"  {o.order_id}  {o.symbol}  {o.side}  qty={o.quantity}  status={o.status}")
 
     # Today's deals
-    deals = client.deals.list(ACCOUNT_NO)
+    deals = client.deals.list(ACCOUNT_NO, market_type="STOCK")
     print(f"\nDeals today: {len(deals.deals or [])}")
     for d in (deals.deals or [])[:5]:
         print(f"  {d.symbol}  qty={d.quantity}  price={d.price}")

@@ -69,13 +69,23 @@ class AccountsResource:
         )
         return self._client._parse(response, LoanPackageResponse)
 
-    def ppse(self, account_no: str, *, symbol: str, price: str) -> PpseResponse:
+    def ppse(
+        self,
+        account_no: str,
+        *,
+        symbol: str,
+        price: str,
+        market_type: MarketType,
+        loan_package_id: int,
+    ) -> PpseResponse:
         """Get pre-trade price/size estimation (PPSE) for a symbol.
 
         Args:
             account_no: Sub-account number.
             symbol: Security symbol (e.g. "HPG").
             price: Price string for estimation.
+            market_type: Market type, either "STOCK" or "DERIVATIVE".
+            loan_package_id: Transaction package code.
 
         Returns:
             PpseResponse with max buy/sell quantities.
@@ -83,7 +93,15 @@ class AccountsResource:
         path = f"/accounts/{account_no}/ppse"
         headers = self._client._request_headers("GET", path)
         response = self._client._send(
-            "GET", path, headers=headers, params={"symbol": symbol, "price": price}
+            "GET",
+            path,
+            headers=headers,
+            params={
+                "symbol": symbol,
+                "price": price,
+                "marketType": market_type,
+                "loanPackageId": loan_package_id,
+            },
         )
         return self._client._parse(response, PpseResponse)
 
@@ -126,11 +144,35 @@ class AsyncAccountsResource:
         )
         return self._client._parse(response, LoanPackageResponse)
 
-    async def ppse(self, account_no: str, *, symbol: str, price: str) -> PpseResponse:
-        """Get PPSE for a symbol (async)."""
+    async def ppse(
+        self,
+        account_no: str,
+        *,
+        symbol: str,
+        price: str,
+        market_type: MarketType,
+        loan_package_id: int,
+    ) -> PpseResponse:
+        """Get PPSE for a symbol (async).
+
+        Args:
+            account_no: Sub-account number.
+            symbol: Security symbol (e.g. "HPG").
+            price: Price string for estimation.
+            market_type: Market type, either "STOCK" or "DERIVATIVE".
+            loan_package_id: Transaction package code.
+        """
         path = f"/accounts/{account_no}/ppse"
         headers = self._client._request_headers("GET", path)
         response = await self._client._async_send(
-            "GET", path, headers=headers, params={"symbol": symbol, "price": price}
+            "GET",
+            path,
+            headers=headers,
+            params={
+                "symbol": symbol,
+                "price": price,
+                "marketType": market_type,
+                "loanPackageId": loan_package_id,
+            },
         )
         return self._client._parse(response, PpseResponse)

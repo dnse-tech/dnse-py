@@ -40,7 +40,7 @@ async def main():
         print("open orders:", len(orders.orders or []))
 
         # Deals
-        deals = await client.deals.list(ACCOUNT_NO)
+        deals = await client.deals.list(ACCOUNT_NO, market_type="STOCK")
         print("deals:", len(deals.deals or []))
 
 
