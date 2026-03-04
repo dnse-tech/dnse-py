@@ -36,7 +36,7 @@ async def main():
         print("security_info:", sec.ceiling_price, sec.floor_price)
 
         # Orders — read-only (no OTP)
-        orders = await client.orders.list(ACCOUNT_NO, marketType="STOCK")
+        orders = await client.orders.list(ACCOUNT_NO, market_type="STOCK", order_category="NORMAL")
         print("open orders:", len(orders.orders or []))
 
         # Deals
