@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import json
+import logging
+import re
 import time
 from typing import TYPE_CHECKING, Any, TypeVar
 
 import httpx
 
 from dnse._http import HttpConfig, build_request_headers, handle_response
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     pass
@@ -16,6 +21,16 @@ T = TypeVar("T")
 
 MAX_RETRIES = 3
 RETRY_BASE_DELAY = 1.0  # seconds
+
+# The DNSE API embeds JSON objects as unescaped strings in the `metadata` field,
+# e.g. "metadata": "{"key":"val"}" instead of "metadata": "{\"key\":\"val\"}".
+# This regex captures the raw embedded object so we can re-encode it properly.
+_RE_UNESCAPED_METADATA = re.compile(r'"metadata":\s*"(\{.*?\})"', re.DOTALL)
+
+
+def _sanitize_response(text: str) -> str:
+    """Fix unescaped JSON objects inside the `metadata` string field (server-side bug)."""
+    return _RE_UNESCAPED_METADATA.sub(lambda m: '"metadata": ' + json.dumps(m.group(1)), text)
 
 
 class BaseClient:
@@ -56,7 +71,7 @@ class BaseClient:
         if (
             self._trading_token
             and method.upper() in ("POST", "PUT", "DELETE")
-            and "/accounts/orders" in path
+            and "/orders" in path
         ):
             headers["trading-token"] = self._trading_token
         return headers
@@ -83,7 +98,9 @@ class BaseClient:
             dict(response.headers),
             trading_token_set=self._trading_token is not None,
         )
-        return model.model_validate(response.json())  # type: ignore[attr-defined]
+        logger.debug("Response body [%s]: %s", response.status_code, response.text[:200])
+        text = _sanitize_response(response.text)
+        return model.model_validate(json.loads(text))  # type: ignore[attr-defined]
 
     def _send(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
         """Send HTTP request. Override in sync/async subclasses.

@@ -43,6 +43,8 @@ class OrderItem(DnseBaseModel):
     trans_date: str | None = None
     created_date: str | None = None
     modified_date: str | None = None
+    metadata: str | None = None  # raw JSON string (server returns unescaped JSON object)
+    error: str | None = None
 
 
 class PlaceOrderResponse(DnseBaseModel):
@@ -66,6 +68,8 @@ class PlaceOrderResponse(DnseBaseModel):
     trans_date: str | None = None
     created_date: str | None = None
     modified_date: str | None = None
+    metadata: str | None = None  # raw JSON string (server returns unescaped JSON object)
+    error: str | None = None
 
 
 class GetOrdersResponse(DnseBaseModel):

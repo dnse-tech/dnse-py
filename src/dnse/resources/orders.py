@@ -50,34 +50,44 @@ class OrdersResource:
         )
         return self._client._parse(response, PlaceOrderResponse)
 
-    def list(self, account_no: str, **params: Any) -> GetOrdersResponse:
+    def list(
+        self, account_no: str, *, market_type: str, order_category: str, **params: Any
+    ) -> GetOrdersResponse:
         """Get the current order book for a sub-account.
 
         Args:
             account_no: Sub-account number.
-            **params: Query params (e.g. marketType="STOCK", orderCategory="NORMAL").
+            market_type: Market type query param (e.g. "STOCK").
+            order_category: Order category query param (e.g. "NORMAL").
+            **params: Additional query params.
 
         Returns:
             GetOrdersResponse with list of active orders.
         """
         path = f"/accounts/{account_no}/orders"
         headers = self._client._request_headers("GET", path)
-        response = self._client._send("GET", path, headers=headers, params=params or None)
+        query = {"marketType": market_type, "orderCategory": order_category, **params}
+        response = self._client._send("GET", path, headers=headers, params=query)
         return self._client._parse(response, GetOrdersResponse)
 
-    def get(self, account_no: str, order_id: int) -> OrderItem:
+    def get(
+        self, account_no: str, order_id: int, *, market_type: str, order_category: str
+    ) -> OrderItem:
         """Get details of a single order.
 
         Args:
             account_no: Sub-account number.
             order_id: Order ID.
+            market_type: Market type query param (e.g. "STOCK").
+            order_category: Order category query param (e.g. "NORMAL").
 
         Returns:
             OrderItem with full order details.
         """
         path = f"/accounts/{account_no}/orders/{order_id}"
         headers = self._client._request_headers("GET", path)
-        response = self._client._send("GET", path, headers=headers)
+        params = {"marketType": market_type, "orderCategory": order_category}
+        response = self._client._send("GET", path, headers=headers, params=params)
         return self._client._parse(response, OrderItem)
 
     def update(
@@ -93,6 +103,13 @@ class OrdersResource:
 
         Requires an active trading token. Sends only non-None fields.
 
+        .. warning::
+            DNSE implements modification as cancel-then-replace: the original order
+            is cancelled and a **new** order is created with a new ID. The returned
+            ``OrderItem.id`` will differ from ``order_id``. Any code that needs to
+            track or cancel the order after calling ``update()`` must use the new ID
+            from the returned object, not the original ``order_id``.
+
         Args:
             account_no: Sub-account number.
             order_id: Order ID to modify.
@@ -101,7 +118,7 @@ class OrdersResource:
             order_category: Order category query param (e.g. "NORMAL").
 
         Returns:
-            Updated OrderItem.
+            OrderItem for the newly created replacement order (new ID).
         """
         path = f"/accounts/{account_no}/orders/{order_id}"
         headers = self._client._request_headers("PUT", path)
@@ -183,36 +200,44 @@ class AsyncOrdersResource:
         )
         return self._client._parse(response, PlaceOrderResponse)
 
-    async def list(self, account_no: str, **params: Any) -> GetOrdersResponse:
+    async def list(
+        self, account_no: str, *, market_type: str, order_category: str, **params: Any
+    ) -> GetOrdersResponse:
         """Get the current order book (async).
 
         Args:
             account_no: Sub-account number.
-            **params: Query params.
+            market_type: Market type query param (e.g. "STOCK").
+            order_category: Order category query param (e.g. "NORMAL").
+            **params: Additional query params.
 
         Returns:
             GetOrdersResponse with active orders.
         """
         path = f"/accounts/{account_no}/orders"
         headers = self._client._request_headers("GET", path)
-        response = await self._client._async_send(
-            "GET", path, headers=headers, params=params or None
-        )
+        query = {"marketType": market_type, "orderCategory": order_category, **params}
+        response = await self._client._async_send("GET", path, headers=headers, params=query)
         return self._client._parse(response, GetOrdersResponse)
 
-    async def get(self, account_no: str, order_id: int) -> OrderItem:
+    async def get(
+        self, account_no: str, order_id: int, *, market_type: str, order_category: str
+    ) -> OrderItem:
         """Get a single order (async).
 
         Args:
             account_no: Sub-account number.
             order_id: Order ID.
+            market_type: Market type query param (e.g. "STOCK").
+            order_category: Order category query param (e.g. "NORMAL").
 
         Returns:
             OrderItem.
         """
         path = f"/accounts/{account_no}/orders/{order_id}"
         headers = self._client._request_headers("GET", path)
-        response = await self._client._async_send("GET", path, headers=headers)
+        params = {"marketType": market_type, "orderCategory": order_category}
+        response = await self._client._async_send("GET", path, headers=headers, params=params)
         return self._client._parse(response, OrderItem)
 
     async def update(
@@ -226,15 +251,19 @@ class AsyncOrdersResource:
     ) -> OrderItem:
         """Modify an existing order (async).
 
+        DNSE implements modification as cancel-then-replace: the original order is
+        cancelled and a new order is created with a new ID. Use ``returned.id`` for
+        any subsequent get/cancel calls — ``order_id`` is no longer valid after this.
+
         Args:
             account_no: Sub-account number.
-            order_id: Order ID.
+            order_id: Order ID to modify.
             request: Fields to update.
             market_type: Market type query param (e.g. "STOCK").
             order_category: Order category query param (e.g. "NORMAL").
 
         Returns:
-            Updated OrderItem.
+            OrderItem for the newly created replacement order (new ID).
         """
         path = f"/accounts/{account_no}/orders/{order_id}"
         headers = self._client._request_headers("PUT", path)
