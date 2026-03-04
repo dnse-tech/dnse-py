@@ -5,6 +5,14 @@ All notable changes to the DNSE Python SDK project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-03-04
+
+### Changed
+
+- **README**: Updated to document WebSocket streaming (`DnseMarketStream`, `DnseTradingStream`), stream message models, `orders.get()` / `orders.update()`, `accounts.ppse()`, `otp_type` parameter, and market enums
+
+---
+
 ## [0.3.0] - 2026-03-04
 
 ### Added
