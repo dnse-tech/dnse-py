@@ -5,6 +5,34 @@ All notable changes to the DNSE Python SDK project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-03-04
+
+### Added
+
+- **WebSocket Streaming**: Real-time market data and trading event subscriptions via `AsyncDnseClient.stream`
+  - `client.stream.market_data(symbols)` — live quotes and order book updates
+  - `client.stream.trading_events()` — order fill and status change notifications
+- **Typed Market Enums**: `MarketId`, `ProductGrpId`, `SecurityGroupId`, `SecurityStatus` for type-safe market data filtering
+- **Typed `BoardId`** field on `SecurityDefinition` (previously untyped `str`)
+- **`MarketType` parameter** on `client.accounts.loan_packages()` and `client.deals.list()`
+- **`OtpType` enum** for explicit OTP method selection (`EMAIL`, `SMART_OTP`)
+- **`metadata` and `error` fields** on `OrderItem` and `PlaceOrderResponse` — exposes rejection reason (e.g. `QMAX_EXCEED`) and raw server metadata
+- **Integration test suite** with `respx`-based HTTP mocking covering the full request pipeline
+- **Comprehensive async tests** for streaming and resource layers
+
+### Fixed
+
+- **Trading token not sent on `update()` and `cancel()`** — path check was `/accounts/orders` (only matched `place`), changed to `/orders` to cover all order mutation endpoints
+- **`JSONDecodeError` on order detail responses** — server embeds unescaped JSON objects in the `metadata` string field; responses are now sanitized before parsing
+- **Double-headers bug** in low-level HTTP request methods
+
+### Changed
+
+- `client.deals.list()` now requires `market_type` as an explicit keyword argument (previously accepted as `**kwargs`)
+- Order `update()` docstring documents DNSE cancel-then-replace behaviour: the returned `OrderItem.id` is a **new** order ID; callers must use it for subsequent `get()`/`cancel()` calls
+
+---
+
 ## [0.2.0] - 2026-03-03
 
 ### Added
