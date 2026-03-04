@@ -26,22 +26,27 @@ class OrdersResource:
         """Initialize with a sync client reference."""
         self._client = client
 
-    def place(self, request: PlaceOrderRequest) -> PlaceOrderResponse:
+    def place(
+        self, request: PlaceOrderRequest, *, market_type: str, order_category: str
+    ) -> PlaceOrderResponse:
         """Place a new order.
 
         Requires an active trading token on the client.
-        Sends POST /accounts/orders with camelCase JSON body.
+        Sends POST /accounts/orders with camelCase JSON body and required query params.
 
         Args:
-            request: Order parameters.
+            request: Order parameters (body fields).
+            market_type: Market type query param (e.g. "STOCK").
+            order_category: Order category query param (e.g. "NORMAL").
 
         Returns:
             PlaceOrderResponse with order ID and status.
         """
         path = "/accounts/orders"
         headers = self._client._request_headers("POST", path)
+        params = {"marketType": market_type, "orderCategory": order_category}
         response = self._client._send(
-            "POST", path, headers=headers, json=request.model_dump(by_alias=True)
+            "POST", path, headers=headers, json=request.model_dump(by_alias=True), params=params
         )
         return self._client._parse(response, PlaceOrderResponse)
 
@@ -75,7 +80,15 @@ class OrdersResource:
         response = self._client._send("GET", path, headers=headers)
         return self._client._parse(response, OrderItem)
 
-    def update(self, account_no: str, order_id: int, request: UpdateOrderRequest) -> OrderItem:
+    def update(
+        self,
+        account_no: str,
+        order_id: int,
+        request: UpdateOrderRequest,
+        *,
+        market_type: str,
+        order_category: str,
+    ) -> OrderItem:
         """Modify an existing order (quantity and/or price).
 
         Requires an active trading token. Sends only non-None fields.
@@ -84,21 +97,27 @@ class OrdersResource:
             account_no: Sub-account number.
             order_id: Order ID to modify.
             request: Fields to update (None fields excluded).
+            market_type: Market type query param (e.g. "STOCK").
+            order_category: Order category query param (e.g. "NORMAL").
 
         Returns:
             Updated OrderItem.
         """
         path = f"/accounts/{account_no}/orders/{order_id}"
         headers = self._client._request_headers("PUT", path)
+        params = {"marketType": market_type, "orderCategory": order_category}
         response = self._client._send(
             "PUT",
             path,
             headers=headers,
             json=request.model_dump(by_alias=True, exclude_none=True),
+            params=params,
         )
         return self._client._parse(response, OrderItem)
 
-    def cancel(self, account_no: str, order_id: int) -> None:
+    def cancel(
+        self, account_no: str, order_id: int, *, market_type: str, order_category: str
+    ) -> None:
         """Cancel an order.
 
         Requires an active trading token. Expects 204 No Content.
@@ -106,10 +125,13 @@ class OrdersResource:
         Args:
             account_no: Sub-account number.
             order_id: Order ID to cancel.
+            market_type: Market type query param (e.g. "STOCK").
+            order_category: Order category query param (e.g. "NORMAL").
         """
         path = f"/accounts/{account_no}/orders/{order_id}"
         headers = self._client._request_headers("DELETE", path)
-        response = self._client._send("DELETE", path, headers=headers)
+        params = {"marketType": market_type, "orderCategory": order_category}
+        response = self._client._send("DELETE", path, headers=headers, params=params)
         handle_response(
             response.status_code,
             response.text,
@@ -140,19 +162,24 @@ class AsyncOrdersResource:
         """Initialize with an async client reference."""
         self._client = client
 
-    async def place(self, request: PlaceOrderRequest) -> PlaceOrderResponse:
+    async def place(
+        self, request: PlaceOrderRequest, *, market_type: str, order_category: str
+    ) -> PlaceOrderResponse:
         """Place a new order (async).
 
         Args:
-            request: Order parameters.
+            request: Order parameters (body fields).
+            market_type: Market type query param (e.g. "STOCK").
+            order_category: Order category query param (e.g. "NORMAL").
 
         Returns:
             PlaceOrderResponse with order ID and status.
         """
         path = "/accounts/orders"
         headers = self._client._request_headers("POST", path)
+        params = {"marketType": market_type, "orderCategory": order_category}
         response = await self._client._async_send(
-            "POST", path, headers=headers, json=request.model_dump(by_alias=True)
+            "POST", path, headers=headers, json=request.model_dump(by_alias=True), params=params
         )
         return self._client._parse(response, PlaceOrderResponse)
 
@@ -189,7 +216,13 @@ class AsyncOrdersResource:
         return self._client._parse(response, OrderItem)
 
     async def update(
-        self, account_no: str, order_id: int, request: UpdateOrderRequest
+        self,
+        account_no: str,
+        order_id: int,
+        request: UpdateOrderRequest,
+        *,
+        market_type: str,
+        order_category: str,
     ) -> OrderItem:
         """Modify an existing order (async).
 
@@ -197,30 +230,39 @@ class AsyncOrdersResource:
             account_no: Sub-account number.
             order_id: Order ID.
             request: Fields to update.
+            market_type: Market type query param (e.g. "STOCK").
+            order_category: Order category query param (e.g. "NORMAL").
 
         Returns:
             Updated OrderItem.
         """
         path = f"/accounts/{account_no}/orders/{order_id}"
         headers = self._client._request_headers("PUT", path)
+        params = {"marketType": market_type, "orderCategory": order_category}
         response = await self._client._async_send(
             "PUT",
             path,
             headers=headers,
             json=request.model_dump(by_alias=True, exclude_none=True),
+            params=params,
         )
         return self._client._parse(response, OrderItem)
 
-    async def cancel(self, account_no: str, order_id: int) -> None:
+    async def cancel(
+        self, account_no: str, order_id: int, *, market_type: str, order_category: str
+    ) -> None:
         """Cancel an order (async).
 
         Args:
             account_no: Sub-account number.
             order_id: Order ID.
+            market_type: Market type query param (e.g. "STOCK").
+            order_category: Order category query param (e.g. "NORMAL").
         """
         path = f"/accounts/{account_no}/orders/{order_id}"
         headers = self._client._request_headers("DELETE", path)
-        response = await self._client._async_send("DELETE", path, headers=headers)
+        params = {"marketType": market_type, "orderCategory": order_category}
+        response = await self._client._async_send("DELETE", path, headers=headers, params=params)
         handle_response(
             response.status_code,
             response.text,

@@ -6,7 +6,11 @@ from dnse.models.base import DnseBaseModel
 
 
 class PlaceOrderRequest(DnseBaseModel):
-    """Request body for placing a new order (POST /accounts/orders)."""
+    """Request body for placing a new order (POST /accounts/orders).
+
+    Note: marketType and orderCategory are query parameters, not body fields.
+    Pass them to orders.place() directly.
+    """
 
     account_no: str
     symbol: str
@@ -15,8 +19,6 @@ class PlaceOrderRequest(DnseBaseModel):
     quantity: int
     price: float | None = None  # required for LO
     loan_package_id: int | None = None
-    order_category: str | None = None  # e.g. "NORMAL"
-    market_type: str | None = None  # e.g. "STOCK"
 
 
 class OrderItem(DnseBaseModel):

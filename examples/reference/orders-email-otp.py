@@ -46,7 +46,9 @@ with DnseClient(
                 order_type="LO",
                 quantity=100,
                 price=10000.0,
-            )
+            ),
+            market_type="STOCK",
+            order_category="NORMAL",
         )
         print("\norders.place():", order)
 
@@ -59,9 +61,13 @@ with DnseClient(
             ACCOUNT_NO,
             order.id or 0,
             UpdateOrderRequest(quantity=200),
+            market_type="STOCK",
+            order_category="NORMAL",
         )
         print("\norders.update():", updated)
 
         # cancel()
-        client.orders.cancel(ACCOUNT_NO, order.id or 0)
+        client.orders.cancel(
+            ACCOUNT_NO, order.id or 0, market_type="STOCK", order_category="NORMAL"
+        )
         print(f"\norders.cancel(): order {order.id} cancelled")

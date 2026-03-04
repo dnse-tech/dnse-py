@@ -102,11 +102,15 @@ class TestAsyncOrdersResource:
             mock_send.return_value = mock_response
             async with AsyncDnseClient(api_key="key", api_secret="secret") as client:
                 client.set_trading_token("tok")
-                result = await client.orders.place(self._make_place_req())
+                result = await client.orders.place(
+                    self._make_place_req(), market_type="STOCK", order_category="NORMAL"
+                )
         assert isinstance(result, PlaceOrderResponse)
         call_args = mock_send.call_args
         assert call_args[0][0] == "POST"
         assert call_args[0][1] == "/accounts/orders"
+        assert call_args[1]["params"]["marketType"] == "STOCK"
+        assert call_args[1]["params"]["orderCategory"] == "NORMAL"
 
     async def test_list_calls_endpoint(self):
         mock_response = httpx.Response(200, json={"orders": []})
@@ -136,7 +140,9 @@ class TestAsyncOrdersResource:
             async with AsyncDnseClient(api_key="key", api_secret="secret") as client:
                 client.set_trading_token("tok")
                 req = UpdateOrderRequest(price=27500.0)
-                result = await client.orders.update("123", 42, req)
+                result = await client.orders.update(
+                    "123", 42, req, market_type="STOCK", order_category="NORMAL"
+                )
         assert isinstance(result, OrderItem)
         call_args = mock_send.call_args
         assert call_args[0][0] == "PUT"
@@ -148,7 +154,9 @@ class TestAsyncOrdersResource:
             mock_send.return_value = mock_response
             async with AsyncDnseClient(api_key="key", api_secret="secret") as client:
                 client.set_trading_token("tok")
-                result = await client.orders.cancel("123", 42)
+                result = await client.orders.cancel(
+                    "123", 42, market_type="STOCK", order_category="NORMAL"
+                )
         assert result is None
         call_args = mock_send.call_args
         assert call_args[0][0] == "DELETE"

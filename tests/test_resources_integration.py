@@ -109,11 +109,13 @@ class TestOrdersResourceMocked:
                     quantity=100,
                     price=27000.0,
                 )
-                result = client.orders.place(req)
+                result = client.orders.place(req, market_type="STOCK", order_category="NORMAL")
             assert isinstance(result, PlaceOrderResponse)
             call_args = mock_send.call_args
             assert call_args[0][0] == "POST"
             assert call_args[0][1] == "/accounts/orders"
+            assert call_args[1]["params"]["marketType"] == "STOCK"
+            assert call_args[1]["params"]["orderCategory"] == "NORMAL"
 
     def test_list_calls_endpoint(self):
         """orders.list calls GET /accounts/{id}/orders."""
@@ -146,10 +148,14 @@ class TestOrdersResourceMocked:
                 from dnse.models.orders import UpdateOrderRequest
 
                 req = UpdateOrderRequest(price=27500.0)
-                result = client.orders.update("123", 42, req)
+                result = client.orders.update(
+                    "123", 42, req, market_type="STOCK", order_category="NORMAL"
+                )
             call_args = mock_send.call_args
             assert call_args[0][0] == "PUT"
             assert "/accounts/123/orders/42" in call_args[0][1]
+            assert call_args[1]["params"]["marketType"] == "STOCK"
+            assert call_args[1]["params"]["orderCategory"] == "NORMAL"
 
     def test_cancel_calls_endpoint(self):
         """orders.cancel calls DELETE /accounts/{id}/orders/{order_id}."""
@@ -158,10 +164,14 @@ class TestOrdersResourceMocked:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
                 client.set_trading_token("token")
-                result = client.orders.cancel("123", 42)
+                result = client.orders.cancel(
+                    "123", 42, market_type="STOCK", order_category="NORMAL"
+                )
             assert result is None
             call_args = mock_send.call_args
             assert call_args[0][0] == "DELETE"
+            assert call_args[1]["params"]["marketType"] == "STOCK"
+            assert call_args[1]["params"]["orderCategory"] == "NORMAL"
 
     def test_history_calls_endpoint(self):
         """orders.history calls GET /accounts/{id}/orders/history."""
@@ -246,6 +256,8 @@ class TestAsyncResourcesMocked:
                     quantity=100,
                     price=27000.0,
                 )
-                result = await client.orders.place(req)
+                result = await client.orders.place(
+                    req, market_type="STOCK", order_category="NORMAL"
+                )
             call_args = mock_send.call_args
             assert call_args[0][0] == "POST"

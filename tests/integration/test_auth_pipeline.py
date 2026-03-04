@@ -57,7 +57,7 @@ class TestTradingTokenInjection:
                 quantity=100,
                 price=25.0,
             )
-            client.orders.place(order_req)
+            client.orders.place(order_req, market_type="STOCK", order_category="NORMAL")
             request = route.calls.last.request
 
         assert request.headers["trading-token"] == "tok123"

@@ -55,7 +55,7 @@ class TestAsyncAuthPipeline:
                     quantity=100,
                     price=25.0,
                 )
-                await client.orders.place(req)
+                await client.orders.place(req, market_type="STOCK", order_category="NORMAL")
             request = route.calls.last.request
 
         assert request.headers["trading-token"] == "tok123"
@@ -142,13 +142,18 @@ class TestAsyncOrdersPipeline:
                     quantity=100,
                     price=25.0,
                 )
-                result = await client.orders.place(req)
-            body = json.loads(route.calls.last.request.content)
+                result = await client.orders.place(
+                    req, market_type="STOCK", order_category="NORMAL"
+                )
+            request = route.calls.last.request
+            body = json.loads(request.content)
 
         assert isinstance(result, PlaceOrderResponse)
         assert result.id == 99
         assert body["accountNo"] == ACC
         assert body["symbol"] == "HPG"
+        assert request.url.params["marketType"] == "STOCK"
+        assert request.url.params["orderCategory"] == "NORMAL"
 
     async def test_list_with_params(self):
         with respx.mock:
@@ -180,18 +185,29 @@ class TestAsyncOrdersPipeline:
             )
             async with AsyncDnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET) as client:
                 client.set_trading_token("tok")
-                result = await client.orders.update(ACC, 99, UpdateOrderRequest(price=26.0))
-            body = json.loads(route.calls.last.request.content)
+                result = await client.orders.update(
+                    ACC,
+                    99,
+                    UpdateOrderRequest(price=26.0),
+                    market_type="STOCK",
+                    order_category="NORMAL",
+                )
+            request = route.calls.last.request
+            body = json.loads(request.content)
 
         assert isinstance(result, OrderItem)
         assert body["price"] == 26.0
+        assert request.url.params["marketType"] == "STOCK"
+        assert request.url.params["orderCategory"] == "NORMAL"
 
     async def test_cancel(self):
         with respx.mock:
             respx.delete(BASE + f"/accounts/{ACC}/orders/99").mock(return_value=httpx.Response(204))
             async with AsyncDnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET) as client:
                 client.set_trading_token("tok")
-                result = await client.orders.cancel(ACC, 99)
+                result = await client.orders.cancel(
+                    ACC, 99, market_type="STOCK", order_category="NORMAL"
+                )
 
         assert result is None
 

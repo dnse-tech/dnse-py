@@ -110,8 +110,9 @@ class TestSyncOrdersPipeline:
             req = PlaceOrderRequest(
                 account_no=ACC, symbol="HPG", side="NB", order_type="LO", quantity=100, price=25.0
             )
-            result = client.orders.place(req)
-            body = json.loads(route.calls.last.request.content)
+            result = client.orders.place(req, market_type="STOCK", order_category="NORMAL")
+            request = route.calls.last.request
+            body = json.loads(request.content)
 
         assert isinstance(result, PlaceOrderResponse)
         assert result.id == 99
@@ -121,6 +122,8 @@ class TestSyncOrdersPipeline:
         assert body["orderType"] == "LO"
         assert body["quantity"] == 100
         assert body["price"] == 25.0
+        assert request.url.params["marketType"] == "STOCK"
+        assert request.url.params["orderCategory"] == "NORMAL"
 
     def test_list_passes_params(self):
         with respx.mock:
@@ -152,18 +155,27 @@ class TestSyncOrdersPipeline:
             )
             client = DnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET)
             client.set_trading_token("tok")
-            result = client.orders.update(ACC, 99, UpdateOrderRequest(price=26.0))
-            body = json.loads(route.calls.last.request.content)
+            result = client.orders.update(
+                ACC,
+                99,
+                UpdateOrderRequest(price=26.0),
+                market_type="STOCK",
+                order_category="NORMAL",
+            )
+            request = route.calls.last.request
+            body = json.loads(request.content)
 
         assert isinstance(result, OrderItem)
         assert body["price"] == 26.0
+        assert request.url.params["marketType"] == "STOCK"
+        assert request.url.params["orderCategory"] == "NORMAL"
 
     def test_cancel_returns_none(self):
         with respx.mock:
             respx.delete(BASE + f"/accounts/{ACC}/orders/99").mock(return_value=httpx.Response(204))
             client = DnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET)
             client.set_trading_token("tok")
-            result = client.orders.cancel(ACC, 99)
+            result = client.orders.cancel(ACC, 99, market_type="STOCK", order_category="NORMAL")
 
         assert result is None
 

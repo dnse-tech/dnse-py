@@ -38,8 +38,6 @@ def test_place_order_request_model_dump_by_alias():
         quantity=50,
         price=25000.0,
         loan_package_id=1,
-        order_category="NORMAL",
-        market_type="STOCK",
     )
     dumped = req.model_dump(by_alias=True)
     assert dumped["accountNo"] == "456"
@@ -49,8 +47,9 @@ def test_place_order_request_model_dump_by_alias():
     assert dumped["quantity"] == 50
     assert dumped["price"] == 25000.0
     assert dumped["loanPackageId"] == 1
-    assert dumped["orderCategory"] == "NORMAL"
-    assert dumped["marketType"] == "STOCK"
+    # marketType and orderCategory are query params, not body fields
+    assert "orderCategory" not in dumped
+    assert "marketType" not in dumped
 
 
 def test_place_order_request_optional_fields():
