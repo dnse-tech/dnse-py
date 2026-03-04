@@ -24,13 +24,13 @@ with DnseClient(api_key="your-api-key", api_secret="your-api-secret") as client:
 
     # Step 3: use resources
     accounts = client.accounts.list()
-    orders = client.orders.list(accounts.accounts[0].id, marketType="STOCK")
+    orders = client.orders.list(accounts.accounts[0].id, market_type="STOCK", order_category="NORMAL")
 ```
 
 ### Resource API
 
 ```python
-from dnse import DnseClient, PlaceOrderRequest
+from dnse import BoardId, DnseClient, PlaceOrderRequest
 
 with DnseClient(api_key="k", api_secret="s") as client:
     # Accounts
@@ -41,25 +41,26 @@ with DnseClient(api_key="k", api_secret="s") as client:
     # Orders (trading token required for mutations)
     client.registration.verify_otp("123456")
 
+    # Get security info for valid price range
+    secs = client.market.security_info("HPG", board_id=BoardId.ROUND_LOT)
+    sec = secs[0]
+    print(sec.ceiling_price, sec.floor_price)
+
     order = client.orders.place(PlaceOrderRequest(
         account_no="0003979888",
         symbol="HPG",
         side="NB",        # NB = buy, NS = sell
         order_type="LO",  # limit order
         quantity=100,
-        price=27000.0,
+        price=sec.floor_price,  # use floor_price to ensure valid price range
     ))
 
-    active = client.orders.list("0003979888", marketType="STOCK", orderCategory="NORMAL")
+    active = client.orders.list("0003979888", market_type="STOCK", order_category="NORMAL")
     history = client.orders.history("0003979888", **{"from": "2026-01-01", "to": "2026-03-01"})
     client.orders.cancel("0003979888", order.id or 0)
 
     # Deals
     deals = client.deals.list("0003979888", market_type="STOCK")
-
-    # Market
-    sec = client.market.security_info("HPG")
-    print(sec.ceiling_price, sec.floor_price)
 ```
 
 ### Async

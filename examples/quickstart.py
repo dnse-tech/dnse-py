@@ -84,5 +84,5 @@ with DnseClient(api_key=API_KEY, api_secret=API_SECRET, **kwargs) as client:
     # otp = input("\nEnter OTP (or press Enter to skip): ").strip()
     # if otp:
     #     client.registration.verify_otp(otp)
-    #     orders = client.orders.list(acct_no, marketType="STOCK")
+    #     orders = client.orders.list(acct_no, market_type="STOCK", order_category="NORMAL")
     #     print(f"\nOpen orders: {len(orders.orders or [])}")
