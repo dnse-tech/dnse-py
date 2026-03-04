@@ -117,7 +117,9 @@ class TestAsyncOrdersResource:
         with patch.object(AsyncDnseClient, "_async_send", new_callable=AsyncMock) as mock_send:
             mock_send.return_value = mock_response
             async with AsyncDnseClient(api_key="key", api_secret="secret") as client:
-                result = await client.orders.list("123")
+                result = await client.orders.list(
+                    "123", market_type="STOCK", order_category="NORMAL"
+                )
         assert isinstance(result, GetOrdersResponse)
         call_args = mock_send.call_args
         assert call_args[0][0] == "GET"
@@ -128,7 +130,9 @@ class TestAsyncOrdersResource:
         with patch.object(AsyncDnseClient, "_async_send", new_callable=AsyncMock) as mock_send:
             mock_send.return_value = mock_response
             async with AsyncDnseClient(api_key="key", api_secret="secret") as client:
-                result = await client.orders.get("123", 42)
+                result = await client.orders.get(
+                    "123", 42, market_type="STOCK", order_category="NORMAL"
+                )
         assert isinstance(result, OrderItem)
         call_args = mock_send.call_args
         assert "/accounts/123/orders/42" in call_args[0][1]
@@ -177,7 +181,7 @@ class TestAsyncOrdersResource:
         with patch.object(AsyncDnseClient, "_async_send", new_callable=AsyncMock) as mock_send:
             mock_send.return_value = mock_response
             async with AsyncDnseClient(api_key="key", api_secret="secret") as client:
-                await client.orders.list("123", marketType="STOCK")
+                await client.orders.list("123", market_type="STOCK", order_category="NORMAL")
         call_args = mock_send.call_args
         assert call_args[1]["params"]["marketType"] == "STOCK"
 

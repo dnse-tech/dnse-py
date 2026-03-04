@@ -131,7 +131,7 @@ class TestSyncOrdersPipeline:
                 return_value=httpx.Response(200, json={"orders": []})
             )
             client = DnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET)
-            result = client.orders.list(ACC, marketType="STOCK")
+            result = client.orders.list(ACC, market_type="STOCK", order_category="NORMAL")
             request = route.calls.last.request
 
         assert isinstance(result, GetOrdersResponse)
@@ -143,7 +143,7 @@ class TestSyncOrdersPipeline:
                 return_value=httpx.Response(200, json={"id": 99})
             )
             client = DnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET)
-            result = client.orders.get(ACC, 99)
+            result = client.orders.get(ACC, 99, market_type="STOCK", order_category="NORMAL")
 
         assert isinstance(result, OrderItem)
         assert result.id == 99

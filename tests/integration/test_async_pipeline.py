@@ -161,7 +161,7 @@ class TestAsyncOrdersPipeline:
                 return_value=httpx.Response(200, json={"orders": []})
             )
             async with AsyncDnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET) as client:
-                result = await client.orders.list(ACC, marketType="STOCK")
+                result = await client.orders.list(ACC, market_type="STOCK", order_category="NORMAL")
             request = route.calls.last.request
 
         assert isinstance(result, GetOrdersResponse)
@@ -173,7 +173,9 @@ class TestAsyncOrdersPipeline:
                 return_value=httpx.Response(200, json={"id": 99})
             )
             async with AsyncDnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET) as client:
-                result = await client.orders.get(ACC, 99)
+                result = await client.orders.get(
+                    ACC, 99, market_type="STOCK", order_category="NORMAL"
+                )
 
         assert isinstance(result, OrderItem)
         assert result.id == 99

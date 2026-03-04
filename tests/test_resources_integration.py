@@ -123,7 +123,7 @@ class TestOrdersResourceMocked:
         with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
-                result = client.orders.list("123")
+                result = client.orders.list("123", market_type="STOCK", order_category="NORMAL")
             call_args = mock_send.call_args
             assert call_args[0][0] == "GET"
             assert "/accounts/123/orders" in call_args[0][1]
@@ -134,7 +134,7 @@ class TestOrdersResourceMocked:
         with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
             with DnseClient(api_key="key", api_secret="secret") as client:
-                result = client.orders.get("123", 42)
+                result = client.orders.get("123", 42, market_type="STOCK", order_category="NORMAL")
             call_args = mock_send.call_args
             assert "/accounts/123/orders/42" in call_args[0][1]
 

@@ -69,7 +69,7 @@ class TestTradingTokenInjection:
             )
             client = DnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET)
             client.set_trading_token("tok123")
-            client.orders.list(FAKE_ACCOUNT)
+            client.orders.list(FAKE_ACCOUNT, market_type="STOCK", order_category="NORMAL")
             request = route.calls.last.request
 
         assert "trading-token" not in request.headers
