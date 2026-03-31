@@ -29,12 +29,12 @@ with DnseClient(
         **{"from": from_date, "to": to_date},
         marketType="STOCK",
     )
-    print(f"Order history ({from_date} → {to_date}): {len(history.orders or [])} orders")
-    for o in (history.orders or [])[:5]:
-        print(f"  {o.order_id}  {o.symbol}  {o.side}  qty={o.quantity}  status={o.status}")
+    print(f"Order history ({from_date} → {to_date}): {len(history.data or [])} orders")
+    for o in (history.data or [])[:5]:
+        print(f"  {o.id}  {o.symbol}  {o.side}  qty={o.quantity}  status={o.order_status}")
 
-    # Today's deals
+    # Today's positions
     deals = client.deals.list(ACCOUNT_NO, market_type="STOCK")
-    print(f"\nDeals today: {len(deals.deals or [])}")
+    print(f"\nPositions today: {len(deals.deals or [])}")
     for d in (deals.deals or [])[:5]:
-        print(f"  {d.symbol}  qty={d.quantity}  price={d.price}")
+        print(f"  {d.symbol}  qty={d.open_quantity}  cost={d.cost_price}")
