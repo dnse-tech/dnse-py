@@ -195,7 +195,7 @@ class TestSyncOrdersPipeline:
 class TestSyncDealsPipeline:
     def test_list(self):
         with respx.mock:
-            respx.get(BASE + f"/accounts/{ACC}/deals").mock(
+            respx.get(BASE + f"/accounts/{ACC}/positions").mock(
                 return_value=httpx.Response(200, json={"deals": []})
             )
             client = DnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET)

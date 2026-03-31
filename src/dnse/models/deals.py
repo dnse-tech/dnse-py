@@ -27,7 +27,7 @@ class DealItem(DnseBaseModel):
 
 
 class DealsResponse(DnseBaseModel):
-    """Response from GET /accounts/{accountNo}/deals."""
+    """Response from GET /accounts/{accountNo}/positions."""
 
     deals: list[DealItem] = []
     page_index: int | None = None

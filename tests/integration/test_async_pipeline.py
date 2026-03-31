@@ -229,7 +229,7 @@ class TestAsyncOrdersPipeline:
 class TestAsyncDealsPipeline:
     async def test_list(self):
         with respx.mock:
-            respx.get(BASE + f"/accounts/{ACC}/deals").mock(
+            respx.get(BASE + f"/accounts/{ACC}/positions").mock(
                 return_value=httpx.Response(200, json={"deals": []})
             )
             async with AsyncDnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET) as client:

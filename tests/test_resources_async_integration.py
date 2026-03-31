@@ -201,7 +201,7 @@ class TestAsyncDealsResource:
         assert isinstance(result, DealsResponse)
         call_args = mock_send.call_args
         assert call_args[0][0] == "GET"
-        assert "/accounts/123/deals" in call_args[0][1]
+        assert "/accounts/123/positions" in call_args[0][1]
 
     async def test_list_passes_params(self):
         mock_response = httpx.Response(200, json={"deals": []})

@@ -97,10 +97,10 @@ class SecurityDefinition(DnseBaseModel):
     symbol_admin_status_code: str | None = None
     symbol_trading_method_status_code: str | None = None
     symbol_trading_sanction_status_code: str | None = None
-    basic_price: int | None = None
-    ceiling_price: int | None = None
-    floor_price: int | None = None
-    open_interest_quantity: int | None = None
+    basic_price: float | int | None = None
+    ceiling_price: float | int | None = None
+    floor_price: float | int | None = None
+    open_interest_quantity: float | int | None = None
 
     @field_validator("board_id", mode="before")
     @classmethod

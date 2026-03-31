@@ -188,7 +188,7 @@ class TestDealsResourceMocked:
     """Test deals resource with mocked HTTP."""
 
     def test_list_calls_endpoint(self):
-        """deals.list calls GET /accounts/{id}/deals."""
+        """deals.list calls GET /accounts/{id}/positions."""
         mock_response = httpx.Response(200, json={"deals": []})
         with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
@@ -196,7 +196,7 @@ class TestDealsResourceMocked:
                 result = client.deals.list("123", market_type="STOCK")
             call_args = mock_send.call_args
             assert call_args[0][0] == "GET"
-            assert "/accounts/123/deals" in call_args[0][1]
+            assert "/accounts/123/positions" in call_args[0][1]
 
 
 class TestMarketResourceMocked:

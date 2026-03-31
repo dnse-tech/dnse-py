@@ -29,7 +29,7 @@ class DealsResource:
         Returns:
             DealsResponse with list of deal items and pagination info.
         """
-        path = f"/accounts/{account_no}/deals"
+        path = f"/accounts/{account_no}/positions"
         headers = self._client._request_headers("GET", path)
         query = {"marketType": market_type, **params}
         response = self._client._send("GET", path, headers=headers, params=query)
@@ -54,7 +54,7 @@ class AsyncDealsResource:
         Returns:
             DealsResponse with list of deal items and pagination info.
         """
-        path = f"/accounts/{account_no}/deals"
+        path = f"/accounts/{account_no}/positions"
         headers = self._client._request_headers("GET", path)
         query = {"marketType": market_type, **params}
         response = await self._client._async_send("GET", path, headers=headers, params=query)
