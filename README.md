@@ -154,8 +154,39 @@ with DnseClient(api_key="k", api_secret="s") as client:
         print("Authentication failed")
     except DnseRateLimitError as e:
         print(f"Rate limited. Retry after: {e.retry_after}s")
+        if e.rate_limit_info:
+            print(f"Remaining: {e.rate_limit_info.remaining}/{e.rate_limit_info.limit}")
     except DnseAPIError as e:
         print(f"API error {e.status_code}: {e.body}")
+```
+
+## Rate Limiting
+
+### Catching 429 errors
+
+```python
+from dnse import DnseClient, DnseRateLimitError
+
+with DnseClient(api_key="k", api_secret="s") as client:
+    try:
+        client.accounts.list()
+    except DnseRateLimitError as e:
+        info = e.rate_limit_info
+        if info:
+            print(f"Limit: {info.limit}, Remaining: {info.remaining}")
+            print(f"Resets in {info.seconds_until_reset:.0f}s")
+```
+
+### Proactive quota checking
+
+```python
+from dnse import DnseClient, parse_rate_limit_info
+
+with DnseClient(api_key="k", api_secret="s") as client:
+    response = client.get("/accounts")
+    info = parse_rate_limit_info(dict(response.headers))
+    if info and info.remaining is not None and info.remaining < 10:
+        print("Running low on API quota")
 ```
 
 ## OTP Methods

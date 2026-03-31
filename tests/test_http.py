@@ -83,6 +83,36 @@ def test_handle_response_429_non_numeric_retry_after():
     assert exc_info.value.retry_after is None
 
 
+def test_handle_response_429_with_rate_limit_headers():
+    headers = {
+        "retry-after": "5",
+        "x-ratelimit-limit": "100",
+        "x-ratelimit-remaining": "0",
+        "x-ratelimit-reset": "1711900800",
+    }
+    with pytest.raises(DnseRateLimitError) as exc_info:
+        handle_response(429, "Too Many Requests", headers)
+    err = exc_info.value
+    assert err.retry_after == 5.0
+    assert err.rate_limit_info is not None
+    assert err.rate_limit_info.limit == 100
+    assert err.rate_limit_info.remaining == 0
+    assert err.rate_limit_info.reset_at == 1711900800
+
+
+def test_handle_response_429_mixed_case_retry_after():
+    headers = {"Retry-After": "10"}
+    with pytest.raises(DnseRateLimitError) as exc_info:
+        handle_response(429, "Too Many Requests", headers)
+    assert exc_info.value.retry_after == 10.0
+
+
+def test_handle_response_429_without_rate_limit_headers():
+    with pytest.raises(DnseRateLimitError) as exc_info:
+        handle_response(429, "Too Many Requests", {"retry-after": "5"})
+    assert exc_info.value.rate_limit_info is None
+
+
 def test_handle_response_500_raises_api_error():
     with pytest.raises(DnseAPIError) as exc_info:
         handle_response(500, "Internal Server Error")

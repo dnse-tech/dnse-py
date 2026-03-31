@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import time
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from dnse.exceptions import DnseAPIError, DnseAuthError, DnseRateLimitError, DnseSessionExpiredError
@@ -22,6 +24,62 @@ class HttpConfig:
     api_key: str = ""
     api_secret: str = ""
     date_header: str = "date"
+
+
+@dataclass(frozen=True, slots=True)
+class RateLimitInfo:
+    """Parsed rate limit headers from an API response.
+
+    Attributes:
+        limit: Maximum requests allowed in the window (X-RateLimit-Limit).
+        remaining: Requests remaining in the window (X-RateLimit-Remaining).
+        reset_at: UNIX epoch when the window resets (X-RateLimit-Reset).
+    """
+
+    limit: int | None = None
+    remaining: int | None = None
+    reset_at: int | None = None
+
+    @property
+    def seconds_until_reset(self) -> float:
+        """Seconds until the rate limit window resets. Returns 0.0 if unknown."""
+        if self.reset_at is None:
+            return 0.0
+        return max(0.0, self.reset_at - time.time())
+
+
+def parse_rate_limit_info(headers: Mapping[str, str]) -> RateLimitInfo | None:
+    """Parse rate limit headers from an HTTP response.
+
+    Accepts any string mapping (httpx.Headers, plain dict, etc.).
+    Header lookup is case-insensitive. Returns None if no rate limit headers
+    are present.
+
+    Args:
+        headers: Response headers as a string mapping.
+
+    Returns:
+        Parsed RateLimitInfo or None if no rate limit headers found.
+    """
+    lowered = {k.lower(): v for k, v in headers.items()}
+
+    def _safe_int(key: str) -> int | None:
+        val = lowered.get(key)
+        if val is None:
+            return None
+        try:
+            return int(val)
+        except (ValueError, TypeError):
+            return None
+
+    limit = _safe_int("x-ratelimit-limit")
+    remaining = _safe_int("x-ratelimit-remaining")
+    reset_at = _safe_int("x-ratelimit-reset")
+
+    if limit is None and remaining is None and reset_at is None:
+        return None
+
+    return RateLimitInfo(limit=limit, remaining=remaining, reset_at=reset_at)
 
 
 def build_request_headers(
@@ -96,11 +154,13 @@ def handle_response(
     if status_code == 403:
         raise DnseAuthError(status_code, body)
     if status_code == 429:
+        lowered = {k.lower(): v for k, v in (headers or {}).items()}
         retry_after: float | None = None
-        if headers and "retry-after" in headers:
+        if "retry-after" in lowered:
             try:
-                retry_after = float(headers["retry-after"])
+                retry_after = float(lowered["retry-after"])
             except (ValueError, TypeError):
                 retry_after = None
-        raise DnseRateLimitError(status_code, body, retry_after)
+        info = parse_rate_limit_info(lowered)
+        raise DnseRateLimitError(status_code, body, retry_after, rate_limit_info=info)
     raise DnseAPIError(status_code, body)

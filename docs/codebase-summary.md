@@ -62,7 +62,7 @@ DnseError (base)
 ├── DnseAPIError (status_code, body)
 │   ├── DnseAuthError (401/403 without trading token)
 │   ├── DnseSessionExpiredError (401 with trading token set)
-│   └── DnseRateLimitError (429 + retry_after)
+│   └── DnseRateLimitError (429 + retry_after + rate_limit_info)
 ```
 
 All exceptions automatically raised by response handler for non-2xx status codes. `DnseSessionExpiredError` indicates trading token has expired; user must call `client.registration.verify_otp()` again.

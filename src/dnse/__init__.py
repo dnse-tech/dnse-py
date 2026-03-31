@@ -5,6 +5,7 @@ try:
 except ModuleNotFoundError:
     __version__ = "0.0.0+dev"
 
+from dnse._http import RateLimitInfo, parse_rate_limit_info
 from dnse.async_client import AsyncDnseClient
 from dnse.client import DnseClient
 from dnse.exceptions import (
@@ -45,6 +46,9 @@ __all__ = [
     # clients
     "DnseClient",
     "AsyncDnseClient",
+    # rate limiting
+    "RateLimitInfo",
+    "parse_rate_limit_info",
     # exceptions
     "DnseError",
     "DnseAPIError",

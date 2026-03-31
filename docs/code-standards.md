@@ -136,7 +136,11 @@ class DnseAuthError(DnseAPIError):
 
 class DnseRateLimitError(DnseAPIError):
     """Rate limited (429)."""
-    def __init__(self, status_code: int, body: str, retry_after: float | None = None) -> None: ...
+    def __init__(
+        self, status_code: int, body: str,
+        retry_after: float | None = None,
+        rate_limit_info: RateLimitInfo | None = None,
+    ) -> None: ...
 ```
 
 ### Usage in Code
@@ -148,10 +152,23 @@ except DnseAuthError:
     pass
 except DnseRateLimitError as e:
     # Exponential backoff using e.retry_after
+    # Access rate limit details via e.rate_limit_info
+    if e.rate_limit_info:
+        print(f"{e.rate_limit_info.remaining}/{e.rate_limit_info.limit}")
     pass
 except DnseAPIError as e:
     # Other API errors (access status_code, body)
     pass
+```
+
+### Rate Limit Info
+```python
+from dnse import parse_rate_limit_info
+
+# Parse rate limit headers from any successful response
+info = parse_rate_limit_info(dict(response.headers))
+if info and info.remaining is not None and info.remaining < 10:
+    print(f"Quota low — resets in {info.seconds_until_reset:.0f}s")
 ```
 
 ## Model Design (Pydantic v2)
