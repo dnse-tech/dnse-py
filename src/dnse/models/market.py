@@ -79,7 +79,7 @@ def _coerce_int_enum(enum_cls: type, v: object) -> object:
 
 
 class SecurityDefinition(DnseBaseModel):
-    """Security definition from GET /price/secdef/{symbol}."""
+    """Security definition from GET /price/{symbol}/secdef."""
 
     symbol: str | None = None
     market_id: MarketId | int | str | None = (

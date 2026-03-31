@@ -203,7 +203,7 @@ class TestMarketResourceMocked:
     """Test market resource with mocked HTTP."""
 
     def test_security_info_calls_endpoint(self):
-        """market.security_info calls GET /price/secdef/{symbol} and returns a list."""
+        """market.security_info calls GET /price/{symbol}/secdef and returns a list."""
         mock_response = httpx.Response(200, json=[{"symbol": "HPG"}])
         with patch.object(DnseClient, "_send") as mock_send:
             mock_send.return_value = mock_response
@@ -211,7 +211,7 @@ class TestMarketResourceMocked:
                 result = client.market.security_info("HPG")
             call_args = mock_send.call_args
             assert call_args[0][0] == "GET"
-            assert "/price/secdef/HPG" in call_args[0][1]
+            assert "/price/HPG/secdef" in call_args[0][1]
         assert isinstance(result, list)
         assert result[0].symbol == "HPG"
 

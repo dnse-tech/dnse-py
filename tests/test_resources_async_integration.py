@@ -230,7 +230,7 @@ class TestAsyncMarketResource:
         assert isinstance(result[0], SecurityDefinition)
         call_args = mock_send.call_args
         assert call_args[0][0] == "GET"
-        assert "/price/secdef/HPG" in call_args[0][1]
+        assert "/price/HPG/secdef" in call_args[0][1]
 
 
 # ---------------------------------------------------------------------------

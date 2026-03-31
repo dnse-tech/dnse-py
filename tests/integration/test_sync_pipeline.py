@@ -207,7 +207,7 @@ class TestSyncDealsPipeline:
 class TestSyncMarketPipeline:
     def test_security_info(self):
         with respx.mock:
-            respx.get(BASE + "/price/secdef/HPG").mock(
+            respx.get(BASE + "/price/HPG/secdef").mock(
                 return_value=httpx.Response(200, json=[{"symbol": "HPG", "boardId": "AL"}])
             )
             client = DnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET)
@@ -222,7 +222,7 @@ class TestSyncMarketPipeline:
         from dnse.models.market import BoardId
 
         with respx.mock:
-            route = respx.get(BASE + "/price/secdef/HPG").mock(
+            route = respx.get(BASE + "/price/HPG/secdef").mock(
                 return_value=httpx.Response(200, json=[{"symbol": "HPG", "boardId": "G1"}])
             )
             client = DnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET)

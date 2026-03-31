@@ -39,7 +39,7 @@ class MarketResource:
         Returns:
             List of SecurityDefinition — one entry per board.
         """
-        path = f"/price/secdef/{symbol}"
+        path = f"/price/{symbol}/secdef"
         params = {"boardId": board_id.value} if board_id else {}
         headers = self._client._request_headers("GET", path)
         response = self._client._send("GET", path, headers=headers, params=params)
@@ -73,7 +73,7 @@ class AsyncMarketResource:
         Returns:
             List of SecurityDefinition — one entry per board.
         """
-        path = f"/price/secdef/{symbol}"
+        path = f"/price/{symbol}/secdef"
         params = {"boardId": board_id.value} if board_id else {}
         headers = self._client._request_headers("GET", path)
         response = await self._client._async_send("GET", path, headers=headers, params=params)

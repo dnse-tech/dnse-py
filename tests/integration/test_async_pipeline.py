@@ -241,7 +241,7 @@ class TestAsyncDealsPipeline:
 class TestAsyncMarketPipeline:
     async def test_security_info(self):
         with respx.mock:
-            respx.get(BASE + "/price/secdef/HPG").mock(
+            respx.get(BASE + "/price/HPG/secdef").mock(
                 return_value=httpx.Response(200, json=[{"symbol": "HPG", "boardId": "AL"}])
             )
             async with AsyncDnseClient(api_key=FAKE_KEY, api_secret=FAKE_SECRET) as client:
