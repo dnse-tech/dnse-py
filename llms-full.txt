@@ -1,0 +1,365 @@
+# dnse
+
+> Python SDK for the DNSE Open API (Vietnamese stock exchange). Supports sync/async HTTP via httpx, WebSocket streaming for market data and trading events, HMAC-SHA256 authentication, OTP-based trading tokens, Pydantic v2 response models, and strict typing. Python 3.10+. Install: `pip install dnse`.
+
+## Core
+
+### Installation
+
+```bash
+pip install dnse
+```
+
+Dependencies: `httpx >=0.27`, `pydantic >=2`
+
+### Authentication
+
+All requests are signed with HMAC-SHA256. Trading mutations require an OTP-derived trading token.
+
+```python
+from dnse import DnseClient
+
+with DnseClient(api_key="your-api-key", api_secret="your-api-secret") as client:
+    # Step 1: request OTP email
+    client.registration.send_otp()
+
+    # Step 2: verify OTP -> sets trading token on client
+    client.registration.verify_otp("123456")
+
+    # OTP types: "email_otp" (default), "smart_otp"
+    client.registration.verify_otp("123456", otp_type="smart_otp")
+```
+
+### Client Configuration
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `api_key` | `""` | API key from DNSE portal |
+| `api_secret` | `""` | API secret for HMAC signing |
+| `base_url` | `https://openapi.dnse.com.vn` | API base URL |
+| `timeout` | `30.0` | Request timeout (seconds) |
+| `date_header` | `"date"` | Date header name (`"date"` or `"x-aux-date"`) |
+
+### Sync Client
+
+```python
+from dnse import DnseClient
+
+with DnseClient(api_key="k", api_secret="s") as client:
+    # Resource-oriented API via cached properties
+    accounts = client.accounts.list()
+    balances = client.accounts.balances("0003979888")
+    packages = client.accounts.loan_packages("0003979888", market_type="STOCK", symbol="HPG")
+    ppse = client.accounts.ppse("0003979888", market_type="STOCK")
+
+    # Orders (trading token required for mutations)
+    client.registration.verify_otp("123456")
+    order = client.orders.place(PlaceOrderRequest(
+        account_no="0003979888",
+        symbol="HPG",
+        side="NB",        # NB = buy, NS = sell
+        order_type="LO",  # limit order
+        quantity=100,
+        price=25000,
+    ))
+    detail = client.orders.get("0003979888", order.id or 0)
+    active = client.orders.list("0003979888", market_type="STOCK", order_category="NORMAL")
+    history = client.orders.history("0003979888", **{"from": "2026-01-01", "to": "2026-03-01"})
+    updated = client.orders.update("0003979888", order.id or 0, UpdateOrderRequest(
+        price=26000, quantity=100,
+    ))
+    client.orders.cancel("0003979888", order.id or 0)
+
+    # Deals
+    deals = client.deals.list("0003979888", market_type="STOCK")
+
+    # Market data
+    from dnse import BoardId
+    secs = client.market.security_info("HPG", board_id=BoardId.ROUND_LOT)
+    sec = secs[0]
+    print(sec.ceiling_price, sec.floor_price)
+```
+
+### Async Client
+
+```python
+from dnse import AsyncDnseClient
+
+async with AsyncDnseClient(api_key="k", api_secret="s") as client:
+    await client.registration.verify_otp("123456")
+    orders = await client.orders.list("0003979888", market_type="STOCK", order_category="NORMAL")
+```
+
+Same resource interface as sync, all methods are async/await.
+
+### WebSocket Streaming -- Market Data
+
+```python
+from dnse import DnseMarketStream
+
+stream = DnseMarketStream(api_key="k", api_secret="s")
+
+async def on_trade(msg):
+    print(msg.symbol, msg.price, msg.volume)
+
+async def on_quote(msg):
+    print(msg.bid_price, msg.ask_price)
+
+async def on_ohlc(msg):
+    print(msg.open, msg.high, msg.low, msg.close)
+
+async def on_expected_price(msg):
+    print(msg.price)
+
+async def on_secdef(msg):
+    print(msg.ceiling, msg.floor, msg.ref_price)
+
+stream.subscribe_trades(["HPG", "VIC"], on_trade)
+stream.subscribe_quotes(["HPG"], on_quote)
+stream.subscribe_ohlc(["HPG"], on_ohlc, timeframe="1m")
+stream.subscribe_expected_price(["HPG"], on_expected_price)
+stream.subscribe_security_def(["HPG"], on_secdef)
+
+stream.run()  # blocking
+```
+
+### WebSocket Streaming -- Trading Events (Private)
+
+```python
+from dnse import DnseTradingStream
+
+stream = DnseTradingStream(api_key="k", api_secret="s")
+
+async def on_order(msg):
+    print(msg.order_id, msg.status)
+
+async def on_position(msg):
+    print(msg.symbol, msg.qty, msg.avg_price)
+
+async def on_account(msg):
+    print(msg.account_no, msg.balance, msg.equity)
+
+stream.subscribe_orders(on_order)
+stream.subscribe_positions(on_position)
+stream.subscribe_account(on_account)
+
+stream.run()
+```
+
+### Stream Message Models
+
+| Type field | Model class | Fields |
+|-----------|-------------|--------|
+| `"t"` | `StreamTrade` | symbol, price, volume, timestamp, side |
+| `"te"` | `StreamTradeExtra` | symbol, price, volume, timestamp, side, total_volume, total_value |
+| `"q"` | `StreamQuote` | symbol, bid_price, bid_volume, ask_price, ask_volume, timestamp |
+| `"b"` | `StreamOhlc` | symbol, open, high, low, close, volume, timeframe, timestamp |
+| `"e"` | `StreamExpectedPrice` | symbol, price, volume, timestamp |
+| `"sd"` | `StreamSecurityDef` | symbol, ceiling, floor, ref_price |
+| `"o"` | `StreamOrder` | order_id, symbol, side, qty, price, status, timestamp |
+| `"p"` | `StreamPosition` | symbol, qty, avg_price, market_value |
+| `"a"` | `StreamAccountUpdate` | account_no, balance, equity |
+
+All stream models inherit from `DnseBaseModel` with all fields optional (`| None`).
+
+### Error Handling
+
+```python
+from dnse import DnseClient, DnseAuthError, DnseRateLimitError, DnseSessionExpiredError, DnseAPIError
+from dnse.stream.exceptions import DnseStreamError, DnseStreamAuthError, DnseStreamConnectionError
+
+with DnseClient(api_key="k", api_secret="s") as client:
+    try:
+        client.orders.list("0003979888", market_type="STOCK", order_category="NORMAL")
+    except DnseSessionExpiredError:
+        # Trading token expired -- re-verify OTP
+        client.registration.verify_otp(input("OTP: "))
+    except DnseAuthError:
+        print("Authentication failed")
+    except DnseRateLimitError as e:
+        print(f"Rate limited. Retry after: {e.retry_after}s")
+    except DnseAPIError as e:
+        print(f"API error {e.status_code}: {e.body}")
+```
+
+Auto-retry: client retries 429 responses up to 3 times with exponential backoff (respects `retry-after` header).
+
+### Exception Hierarchy
+
+```
+DnseError (base)
++-- DnseAPIError (status_code: int, body: str)
+|   +-- DnseAuthError (401/403 without trading token)
+|   +-- DnseSessionExpiredError (401 with trading token set)
+|   +-- DnseRateLimitError (429, retry_after: float | None)
++-- DnseStreamError (base for WebSocket errors)
+    +-- DnseStreamAuthError
+    +-- DnseStreamConnectionError (retry_count: int)
+    +-- DnseStreamProtocolError
+```
+
+### Resource Methods Reference
+
+#### Registration
+- `client.registration.send_otp()` -- Send OTP email
+- `client.registration.verify_otp(otp: str, otp_type: str = "email_otp")` -- Verify OTP, sets trading token
+
+#### Accounts
+- `client.accounts.list()` -> `AccountsResponse`
+- `client.accounts.balances(account_no)` -> `AccountBalanceResponse`
+- `client.accounts.loan_packages(account_no, market_type, symbol)` -> `LoanPackageResponse`
+- `client.accounts.ppse(account_no, market_type)` -> `PpseResponse`
+
+#### Orders (trading token required for mutations)
+- `client.orders.place(PlaceOrderRequest(...))` -> `PlaceOrderResponse`
+- `client.orders.list(account_no, market_type, order_category)` -> `GetOrdersResponse`
+- `client.orders.get(account_no, order_id)` -> `OrderItem`
+- `client.orders.update(account_no, order_id, UpdateOrderRequest(...))` -> `PlaceOrderResponse`
+- `client.orders.cancel(account_no, order_id)` -> response
+- `client.orders.history(account_no, **{"from": "YYYY-MM-DD", "to": "YYYY-MM-DD"})` -> `OrderHistoryResponse`
+
+#### Deals
+- `client.deals.list(account_no, market_type)` -> `DealsResponse`
+
+#### Market
+- `client.market.security_info(symbol, board_id=BoardId.ROUND_LOT)` -> `list[SecurityDefinition]`
+
+### Public Exports
+
+```python
+from dnse import (
+    # Clients
+    DnseClient, AsyncDnseClient,
+    # Streams
+    DnseMarketStream, DnseTradingStream,
+    # Exceptions
+    DnseError, DnseAPIError, DnseAuthError, DnseRateLimitError, DnseSessionExpiredError, DnseStreamError,
+    # Base model
+    DnseBaseModel,
+    # Auth models
+    TwoFARequest, TwoFAResponse,
+    # Account models
+    AccountSubItem, AccountsResponse, StockBalance, AccountBalanceResponse,
+    LoanPackage, LoanPackageResponse, MarketType, PpseResponse,
+    # Order models
+    PlaceOrderRequest, PlaceOrderResponse, OrderItem, GetOrdersResponse,
+    UpdateOrderRequest, OrderHistoryResponse,
+    # Deal models
+    DealItem, DealsResponse,
+    # Market models
+    BoardId, SecurityDefinition,
+    # Version
+    __version__,
+)
+```
+
+### Market Enums
+
+```python
+from dnse.models.market import BoardId, MarketId, ProductGrpId, SecurityGroupId, SecurityStatus
+```
+
+Use for type-safe filtering of `SecurityDefinition` fields from `client.market.security_info()`.
+
+### Models -- Base Pattern
+
+All models inherit `DnseBaseModel` (Pydantic v2) with automatic snake_case <-> camelCase conversion:
+
+```python
+from dnse.models import DnseBaseModel
+
+class MyModel(DnseBaseModel):
+    user_id: str
+    created_at: str
+
+# Accepts both camelCase JSON and snake_case kwargs
+m = MyModel(**{"userId": "123", "createdAt": "2026-01-01"})
+m = MyModel(user_id="123", created_at="2026-01-01")
+
+# Serialize back to camelCase
+m.model_dump(by_alias=True)  # {"userId": "123", "createdAt": "2026-01-01"}
+```
+
+## Architecture
+
+### HMAC-SHA256 Signature
+
+All requests are signed. Signature components:
+- `(request-target)`: lowercase method + path (e.g., `get /accounts`)
+- `date`: RFC 2822 timestamp
+- `nonce`: UUID4 hex (32 chars)
+
+```
+X-Signature: Signature keyId="{api_key}",algorithm="hmac-sha256",
+  headers="(request-target) date nonce",signature="{base64(HMAC-SHA256(secret, sig_string))}"
+```
+
+### Layered Architecture
+
+```
+Application Code -> Resource Layer -> Client Layer -> Base Client -> HMAC Signer -> HTTP Utils -> httpx -> Network
+```
+
+- **Resource Layer** (`resources/`): Domain-specific methods (accounts, orders, deals, market, registration)
+- **Client Layer** (`client.py`, `async_client.py`): Sync/async wrappers with `@cached_property` resource access
+- **Base Client** (`_base_client.py`): Retry logic (3 attempts on 429), typed response parsing, trading token injection
+- **HMAC Signer** (`_hmac_signer.py`): Stateless HMAC-SHA256 header generation
+- **HTTP Utils** (`_http.py`): `HttpConfig` dataclass, header building, status code -> exception mapping
+
+### Project Structure
+
+```
+src/dnse/
++-- __init__.py              # Public API exports
++-- _version.py              # Auto-generated version (hatch-vcs)
++-- _http.py                 # HTTP config, header building, error handling
++-- _hmac_signer.py          # Stateless HMAC-SHA256 signing
++-- _base_client.py          # BaseClient with retry, parsing, token injection
++-- client.py                # DnseClient (sync)
++-- async_client.py          # AsyncDnseClient (async)
++-- exceptions.py            # Exception hierarchy
++-- models/
+|   +-- base.py              # DnseBaseModel (Pydantic v2, camelCase aliases)
+|   +-- auth.py              # TwoFARequest, TwoFAResponse
+|   +-- accounts.py          # AccountSubItem, AccountsResponse, StockBalance, etc.
+|   +-- orders.py            # PlaceOrderRequest, OrderItem, GetOrdersResponse, etc.
+|   +-- deals.py             # DealItem, DealsResponse
+|   +-- market.py            # SecurityDefinition, BoardId, MarketId, enums
++-- resources/
+|   +-- registration.py      # OTP flow
+|   +-- accounts.py          # Account operations
+|   +-- orders.py            # Order CRUD
+|   +-- deals.py             # Deal listing
+|   +-- market.py            # Security info
++-- stream/
+    +-- market_stream.py     # DnseMarketStream (WebSocket)
+    +-- trading_stream.py    # DnseTradingStream (WebSocket)
+    +-- models.py            # Stream message Pydantic models
+    +-- exceptions.py        # Stream-specific exceptions
+    +-- _base_stream.py      # Base WebSocket logic
+    +-- _stream_auth.py      # Stream authentication
+    +-- _stream_encoding.py  # Message encoding/decoding
+```
+
+## Optional
+
+### Code Standards
+
+- **Naming:** snake_case for functions/variables, PascalCase for classes, _prefix for private modules
+- **Import order:** stdlib -> third-party -> local, enforced by ruff `I` rules
+- **Type hints:** Required on all public APIs, pyright strict mode
+- **Testing:** pytest + pytest-asyncio + respx, tests mirror `src/` structure
+- **Linting:** ruff (E, F, I, B, UP, D, S rules, Google docstrings)
+- **CI/CD:** GitHub Actions -- lint -> type check -> test matrix (Python 3.10/3.11/3.12)
+- **Versioning:** Git tags -> hatch-vcs -> auto `_version.py`
+
+### Development
+
+```bash
+uv sync              # Install dependencies
+uv run pytest        # Run tests
+uv run ruff check .  # Lint
+uv run pyright       # Type check
+```
+
+Test framework: pytest + pytest-asyncio + respx (HTTP mocking).

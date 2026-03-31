@@ -1,0 +1,20 @@
+# dnse
+
+> Python SDK for the DNSE Open API (Vietnamese stock exchange). Supports sync/async HTTP via httpx, WebSocket streaming for market data and trading events, HMAC-SHA256 authentication, OTP-based trading tokens, Pydantic v2 response models, and strict typing. Python 3.10+. Install: `pip install dnse`.
+
+## Core
+
+- [README](https://github.com/dnse-tech/dnse-py/blob/main/README.md): Installation, quickstart, full usage examples for REST API, WebSocket streams, error handling, and configuration
+- [API Reference](https://github.com/dnse-tech/dnse-py/blob/main/docs/api-reference.md): Complete client API signatures, exception hierarchy, model patterns, response object reference
+- [Quick Start](https://github.com/dnse-tech/dnse-py/blob/main/docs/QUICK-START.md): Minimal examples for sync/async usage, error handling, retries, environment variables
+
+## Architecture
+
+- [System Architecture](https://github.com/dnse-tech/dnse-py/blob/main/docs/system-architecture.md): Layered architecture (Resource → Client → BaseClient → HMAC → HTTP → Transport), module responsibilities, data flow, HMAC signature formula, retry logic
+- [Codebase Summary](https://github.com/dnse-tech/dnse-py/blob/main/docs/codebase-summary.md): Project structure, key components, dependencies, testing strategy
+
+## Optional
+
+- [Code Standards](https://github.com/dnse-tech/dnse-py/blob/main/docs/code-standards.md): Naming conventions, import organization, type hint rules, testing patterns, linting config
+- [Project Overview PDR](https://github.com/dnse-tech/dnse-py/blob/main/docs/project-overview-pdr.md): Product requirements, success metrics, future roadmap
+- [Documentation Index](https://github.com/dnse-tech/dnse-py/blob/main/docs/DOCUMENTATION-INDEX.md): Navigation guide by audience (user, contributor, architect)
