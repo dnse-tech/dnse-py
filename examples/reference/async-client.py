@@ -31,9 +31,14 @@ async def main():
         print("balances:", balances)
 
         # Market
+        from dnse import BoardId  # noqa: E402
+
         secs = await client.market.security_info("HPG")
         sec = secs[0]
         print("security_info:", sec.ceiling_price, sec.floor_price)
+
+        trades = await client.market.latest_trade("HPG", BoardId.ROUND_LOT)
+        print("latest_trade:", trades[0].match_price if trades else "no trades")
 
         # Orders — read-only (no OTP)
         orders = await client.orders.list(ACCOUNT_NO, market_type="STOCK", order_category="NORMAL")

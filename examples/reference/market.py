@@ -32,3 +32,17 @@ with DnseClient(
     round_lot = client.market.security_info("HPG", board_id=BoardId.ROUND_LOT)
     if round_lot:
         print(f"\nRound lot board: {round_lot[0]}")
+
+    # Latest trade for a symbol
+    trades = client.market.latest_trade("HPG", BoardId.ROUND_LOT)
+    print(f"\nmarket.latest_trade('HPG'): {len(trades)} trade(s)")
+    for t in trades:
+        print(f"  price={t.match_price}  qty={t.match_qtty}  side={t.side}  time={t.time}")
+
+    # Trade history with time range
+    history = client.market.trades(
+        "HPG", BoardId.ROUND_LOT, from_ts="1711929600", to_ts="1712016000", limit=5
+    )
+    print(f"\nmarket.trades('HPG', limit=5): {len(history)} trade(s)")
+    for t in history:
+        print(f"  price={t.match_price}  vol={t.total_volume_traded}  time={t.time}")
