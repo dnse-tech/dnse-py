@@ -78,14 +78,14 @@ All exceptions automatically raised by response handler for non-2xx status codes
 - `models.accounts`: `AccountItem`, `BalanceItem`, `LoanPackage`, `PpseResponse`, `AccountsResponse`
 - `models.orders`: `PlaceOrderRequest`, `PlaceOrderResponse`, `OrderItem`, `OrdersResponse`, `UpdateOrderRequest`, `OrderHistoryResponse`
 - `models.deals`: `DealItem`, `DealsResponse`
-- `models.market`: `SecurityDefinition`, `MarketResponse`
+- `models.market`: `SecurityDefinition`, `Trade`, `MarketResponse`
 
 **Resources** (accessed via client properties):
 - `client.registration.send_otp()`, `client.registration.verify_otp(otp, otp_type)`
 - `client.accounts.list()`, `client.accounts.balances(account_no)`, `client.accounts.loan_packages(account_no)`
 - `client.orders.place(request)`, `client.orders.list(account_no)`, `client.orders.get(account_no, order_id)`, `client.orders.update()`, `client.orders.cancel()`, `client.orders.history()`
 - `client.deals.list(account_no)`
-- `client.market.security_info(symbol)`
+- `client.market.security_info(symbol)`, `client.market.latest_trade(symbol, board_id)`, `client.market.trades(symbol, board_id, from_ts, to_ts, limit=None)`
 
 ### 4. HTTP Configuration & Authentication
 

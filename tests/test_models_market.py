@@ -9,7 +9,9 @@ from dnse.models.market import (
     SecurityDefinition,
     SecurityGroupId,
     SecurityStatus,
+    Trade,
 )
+from dnse.resources.market import _parse_trade_list
 
 
 def test_security_definition_creation():
@@ -200,3 +202,142 @@ def test_security_status_coercion():
     assert secdef.security_status == SecurityStatus.HALT
     secdef2 = SecurityDefinition(security_status=2)
     assert secdef2.security_status == SecurityStatus.NO_HALT
+
+
+# --- Trade model tests ---
+
+
+def test_trade_creation():
+    """Trade can be created with typed fields and enum coercion."""
+    trade = Trade(
+        symbol="HPG",
+        market_id=6,
+        board_id="G1",
+        match_price=27.5,
+        match_qtty=100,
+        side="BUY",
+    )
+    assert trade.symbol == "HPG"
+    assert trade.market_id == MarketId.STO
+    assert trade.board_id == BoardId.ROUND_LOT
+    assert trade.match_price == 27.5
+    assert trade.match_qtty == 100
+    assert trade.side == "BUY"
+
+
+def test_trade_model_validate_camel_case():
+    """Trade.model_validate with camelCase JSON."""
+    trade = Trade.model_validate(
+        {
+            "marketId": 7,
+            "boardId": "G1",
+            "isin": "VN0000000001",
+            "symbol": "MBB",
+            "matchPrice": 25.0,
+            "matchQtty": 200,
+            "side": "SELL",
+            "avgPrice": 24.8,
+            "totalVolumeTraded": 500000,
+            "grossTradeAmount": 12400000.0,
+            "highestPrice": 26.0,
+            "lowestPrice": 24.0,
+            "openPrice": 24.5,
+            "time": "14:30:00",
+        }
+    )
+    assert trade.symbol == "MBB"
+    assert trade.market_id == MarketId.STX
+    assert trade.board_id == BoardId.ROUND_LOT
+    assert trade.match_price == 25.0
+    assert trade.side == "SELL"
+    assert trade.avg_price == 24.8
+    assert trade.total_volume_traded == 500000
+    assert trade.time == "14:30:00"
+
+
+def test_trade_minimal():
+    """Trade works with minimal fields."""
+    trade = Trade.model_validate({"symbol": "VNM"})
+    assert trade.symbol == "VNM"
+    assert trade.market_id is None
+    assert trade.match_price is None
+
+
+def test_trade_all_optional():
+    """Trade with all optional fields (empty constructor)."""
+    trade = Trade()
+    assert trade.symbol is None
+    assert trade.market_id is None
+    assert trade.match_price is None
+
+
+def test_trade_unknown_enums_fallback():
+    """Unknown enum values fall back to raw type without raising."""
+    trade = Trade(market_id=99, board_id="UNKNOWN")
+    assert trade.market_id == 99
+    assert isinstance(trade.market_id, int)
+    assert trade.board_id == "UNKNOWN"
+    assert isinstance(trade.board_id, str)
+
+
+def test_trade_board_id_coercion():
+    """Trade coerces 'G1' string to BoardId.ROUND_LOT."""
+    trade = Trade(board_id="G1")
+    assert trade.board_id == BoardId.ROUND_LOT
+    assert isinstance(trade.board_id, BoardId)
+
+
+def test_trade_market_id_coercion():
+    """Trade coerces int 6 to MarketId.STO."""
+    trade = Trade(market_id=6)
+    assert trade.market_id == MarketId.STO
+    assert isinstance(trade.market_id, MarketId)
+
+
+# --- _parse_trade_list helper tests ---
+
+
+def test_parse_trade_list_valid():
+    """_parse_trade_list unwraps trades dict correctly."""
+    body = {
+        "trades": [
+            {"symbol": "HPG", "matchPrice": 27.5},
+            {"symbol": "MBB", "matchPrice": 25.0},
+        ]
+    }
+    result = _parse_trade_list(body)
+    assert len(result) == 2
+    assert result[0].symbol == "HPG"
+    assert result[1].symbol == "MBB"
+
+
+def test_parse_trade_list_empty():
+    """_parse_trade_list returns empty list for empty trades array."""
+    assert _parse_trade_list({"trades": []}) == []
+
+
+def test_parse_trade_list_missing_key():
+    """_parse_trade_list returns empty list when 'trades' key missing."""
+    assert _parse_trade_list({"other": "data"}) == []
+
+
+def test_parse_trade_list_non_dict():
+    """_parse_trade_list returns empty list for non-dict body."""
+    assert _parse_trade_list("not a dict") == []
+    assert _parse_trade_list([1, 2, 3]) == []
+
+
+def test_parse_trade_list_trades_not_a_list():
+    """_parse_trade_list returns empty list when trades value is not a list."""
+    assert _parse_trade_list({"trades": "not_a_list"}) == []
+    assert _parse_trade_list({"trades": 123}) == []
+
+
+# --- Import verification ---
+
+
+def test_trade_import_from_models():
+    """Trade can be imported from dnse.models."""
+    from dnse.models import Trade as TradeImport
+
+    assert TradeImport is Trade

@@ -210,7 +210,7 @@ model_config = ConfigDict(
 - `accounts.py`: `AccountItem`, `AccountsResponse`, `BalanceItem`, `LoanPackage`, `PpseResponse`
 - `orders.py`: `PlaceOrderRequest`, `PlaceOrderResponse`, `OrderItem`, `OrdersResponse`, `UpdateOrderRequest`, `OrderHistoryResponse`
 - `deals.py`: `DealItem`, `DealsResponse`
-- `market.py`: `SecurityDefinition`, `MarketResponse`
+- `market.py`: `SecurityDefinition`, `Trade`, `MarketResponse`
 
 ### 10. Resources (`resources/{domain}.py`)
 - `registration.py`: `RegistrationResource`, `AsyncRegistrationResource`

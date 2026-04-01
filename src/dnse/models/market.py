@@ -78,6 +78,21 @@ def _coerce_int_enum(enum_cls: type, v: object) -> object:
         return v
 
 
+def _coerce_board_id(v: object) -> object:
+    """Coerce string board_id to BoardId enum when the code is known."""
+    if isinstance(v, str):
+        try:
+            return BoardId(v)
+        except ValueError:
+            return v
+    return v
+
+
+def _coerce_market_id(v: object) -> object:
+    """Coerce market_id to MarketId enum when the code is known."""
+    return _coerce_int_enum(MarketId, v)
+
+
 class SecurityDefinition(DnseBaseModel):
     """Security definition from GET /price/{symbol}/secdef."""
 
@@ -105,19 +120,14 @@ class SecurityDefinition(DnseBaseModel):
     @field_validator("board_id", mode="before")
     @classmethod
     def coerce_board_id(cls, v: object) -> object:
-        """Coerce string board_id to BoardId enum when the code is known."""
-        if isinstance(v, str):
-            try:
-                return BoardId(v)
-            except ValueError:
-                return v
-        return v
+        """Coerce board_id to BoardId enum when the code is known."""
+        return _coerce_board_id(v)
 
     @field_validator("market_id", mode="before")
     @classmethod
     def coerce_market_id(cls, v: object) -> object:
         """Coerce market_id to MarketId enum when the code is known."""
-        return _coerce_int_enum(MarketId, v)
+        return _coerce_market_id(v)
 
     @field_validator("product_grp_id", mode="before")
     @classmethod
@@ -136,3 +146,34 @@ class SecurityDefinition(DnseBaseModel):
     def coerce_security_status(cls, v: object) -> object:
         """Coerce security_status to SecurityStatus enum when the code is known."""
         return _coerce_int_enum(SecurityStatus, v)
+
+
+class Trade(DnseBaseModel):
+    """Trade data from GET /price/{symbol}/trades and /trades/latest."""
+
+    market_id: MarketId | int | str | None = None
+    board_id: BoardId | str | None = None
+    isin: str | None = None
+    symbol: str | None = None
+    match_price: float | None = None
+    match_qtty: int | None = None
+    side: str | None = None
+    avg_price: float | None = None
+    total_volume_traded: int | None = None
+    gross_trade_amount: float | None = None
+    highest_price: float | None = None
+    lowest_price: float | None = None
+    open_price: float | None = None
+    time: str | None = None
+
+    @field_validator("board_id", mode="before")
+    @classmethod
+    def coerce_board_id(cls, v: object) -> object:
+        """Coerce board_id to BoardId enum when the code is known."""
+        return _coerce_board_id(v)
+
+    @field_validator("market_id", mode="before")
+    @classmethod
+    def coerce_market_id(cls, v: object) -> object:
+        """Coerce market_id to MarketId enum when the code is known."""
+        return _coerce_market_id(v)

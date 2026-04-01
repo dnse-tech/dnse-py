@@ -20,6 +20,7 @@ from dnse.models.market import (
     SecurityDefinition,
     SecurityGroupId,
     SecurityStatus,
+    Trade,
 )
 from dnse.models.orders import (
     GetOrdersResponse,
@@ -54,6 +55,7 @@ __all__ = [
     "SecurityGroupId",
     "SecurityStatus",
     "SecurityDefinition",
+    "Trade",
     # orders
     "PlaceOrderRequest",
     "PlaceOrderResponse",
